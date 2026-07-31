@@ -86,19 +86,8 @@
     </div>
 
     <div class="tab-content" id="tab-friends">
-      <div class="friends-tabs">
-        <button class="friend-tab active" data-ftab="list" onclick="switchFriendTab('list')"><i class="fas fa-list"></i> Список</button>
-        <button class="friend-tab" data-ftab="incoming" onclick="switchFriendTab('incoming')"><i class="fas fa-arrow-down"></i> Входящие</button>
-        <button class="friend-tab" data-ftab="outgoing" onclick="switchFriendTab('outgoing')"><i class="fas fa-arrow-up"></i> Исходящие</button>
-        <button class="friend-tab" data-ftab="blocked" onclick="switchFriendTab('blocked')"><i class="fas fa-ban"></i> Блок</button>
-      </div>
-      <div id="friendsContent">
-        <div class="friends-actions">
-          <input type="text" id="friendSearch" placeholder="Поиск друзей..." oninput="searchFriends(this.value)">
-          <button class="btn-primary" onclick="addFriend()"><i class="fas fa-user-plus"></i> Добавить</button>
-        </div>
-        <div id="friendsList"></div>
-        <div id="friendRequests"></div>
+      <div id="friendsList" class="friends-list">
+        <div class="empty-state">У вас пока нет друзей</div>
       </div>
     </div>
 
@@ -142,7 +131,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно для поста -->
   <div id="postModal" class="modal" style="display:none;">
     <div class="modal-overlay" onclick="closePostModal()"></div>
     <div class="modal-content">
