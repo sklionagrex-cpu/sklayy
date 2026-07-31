@@ -869,3 +869,7 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+# ===== АВТОМАТИЧЕСКИЙ БЭКАП ПРИ ЗАПУСКЕ =====
+import subprocess
+subprocess.run(['python', 'backup_restore.py'], capture_output=True)
