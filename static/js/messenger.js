@@ -1,20 +1,23 @@
+// Заставка
 const splash = document.getElementById('splash');
 const splashMessage = document.getElementById('splashMessage');
 const app = document.getElementById('app');
 
 let socket = null;
-let currentUser = {};
 
 function initApp() {
   connectSocket();
   loadChats();
   loadProfileData();
+  loadFeed();
+  loadCommunities();
 
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'profile_updated') {
       const user = event.data.user;
       updateProfilePanel(user);
       loadPanelPosts();
+      loadFeed();
     }
     if (event.data && event.data.type === 'avatar_updated') {
       updateAvatar(event.data.url);
@@ -28,8 +31,152 @@ function initApp() {
     }
   });
   observer.observe(profilePanel, { attributes: true, attributeFilter: ['class'] });
+
+  // При переключении на ленту обновляем
+  const feedPanel = document.getElementById('panel-feed');
+  const feedObserver = new MutationObserver(() => {
+    if (feedPanel.classList.contains('active')) {
+      loadFeed();
+    }
+  });
+  feedObserver.observe(feedPanel, { attributes: true, attributeFilter: ['class'] });
 }
 
+function loadFeed() {
+  fetch('/api/feed')
+    .then(res => res.json())
+    .then(posts => {
+      const container = document.getElementById('feedList');
+      if (!posts || posts.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Подписывайтесь на друзей и вступайте в сообщества</div></div>';
+        return;
+      }
+      container.innerHTML = posts.map(post => {
+        let mediaHtml = '';
+        if (post.media_url) {
+          if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
+            mediaHtml = `<video controls style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;"><source src="${post.media_url}" type="video/mp4"></video>`;
+          } else {
+            mediaHtml = `<img src="${post.media_url}" style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;" alt="Изображение">`;
+          }
+        }
+        const communityLabel = post.community_name ? `<span class="community-label">в сообществе «${post.community_name}»</span>` : '';
+        return `
+          <div class="feed-item">
+            <div class="feed-header">
+              <span class="feed-author">${post.full_name || post.username}</span>
+              ${communityLabel}
+              <span class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ''}</span>
+            </div>
+            <div class="feed-content">${post.content}</div>
+            ${mediaHtml}
+            <div class="feed-actions">
+              <button class="btn-sm" onclick="likePost(${post.id})">❤️ ${post.likes || 0}</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error('Ошибка загрузки ленты:', err));
+}
+
+function likePost(postId) {
+  fetch(`/api/posts/${postId}/like`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        loadFeed();
+      }
+    })
+    .catch(err => console.error('Ошибка:', err));
+}
+
+function loadCommunities() {
+  fetch('/api/communities')
+    .then(res => res.json())
+    .then(data => {
+      // Мои сообщества
+      const myContainer = document.getElementById('myCommunitiesList');
+      if (!data.my || data.my.length === 0) {
+        myContainer.innerHTML = '<div class="empty-state">Вы не состоите в сообществах</div>';
+      } else {
+        myContainer.innerHTML = data.my.map(c => `
+          <div class="community-item">
+            <div class="community-avatar">${c.avatar || '👥'}</div>
+            <div class="community-info">
+              <div class="community-name">${c.name}</div>
+              <div class="community-desc">${c.description || ''}</div>
+            </div>
+            <button class="btn-sm" onclick="leaveCommunity(${c.id})">Покинуть</button>
+          </div>
+        `).join('');
+      }
+      // Все сообщества (для вступления)
+      const allContainer = document.getElementById('allCommunitiesList');
+      if (!data.all || data.all.length === 0) {
+        allContainer.innerHTML = '<div class="empty-state">Нет доступных сообществ</div>';
+      } else {
+        allContainer.innerHTML = data.all.map(c => {
+          const isMember = data.my.some(m => m.id === c.id);
+          return `
+            <div class="community-item">
+              <div class="community-avatar">${c.avatar || '👥'}</div>
+              <div class="community-info">
+                <div class="community-name">${c.name}</div>
+                <div class="community-desc">${c.description || ''}</div>
+              </div>
+              ${isMember ? '<span class="badge">Участник</span>' : `<button class="btn-sm" onclick="joinCommunity(${c.id})">Вступить</button>`}
+            </div>
+          `;
+        }).join('');
+      }
+    })
+    .catch(err => console.error('Ошибка загрузки сообществ:', err));
+}
+
+function createCommunity() {
+  const name = prompt('Название сообщества:');
+  if (!name || !name.trim()) return;
+  const desc = prompt('Описание (необязательно):');
+  fetch('/api/communities', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim(), description: desc || '' })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.community_id) {
+      alert('Сообщество создано!');
+      loadCommunities();
+    } else {
+      alert('Ошибка создания');
+    }
+  })
+  .catch(err => alert('Ошибка: ' + err));
+}
+
+function joinCommunity(communityId) {
+  fetch(`/api/communities/${communityId}/join`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert('Вы вступили в сообщество!');
+        loadCommunities();
+        loadFeed();
+      } else {
+        alert(data.error || 'Ошибка');
+      }
+    })
+    .catch(err => alert('Ошибка: ' + err));
+}
+
+function leaveCommunity(communityId) {
+  if (!confirm('Покинуть сообщество?')) return;
+  // Пока нет API для выхода, просто обновим
+  alert('Функция в разработке');
+}
+
+// ===== ПРОФИЛЬ (панель) =====
 function updateProfilePanel(user) {
   currentUser = user;
   document.getElementById('panelName').textContent = user.full_name || user.username;
@@ -106,10 +253,14 @@ function switchProfileSubTab(tab) {
   document.getElementById(`subtab-${tab}`).classList.add('active');
 }
 
+// ===== ЧАТЫ =====
 function connectSocket() {
   socket = io();
   socket.on('connect', () => console.log('✅ WebSocket подключен'));
-  socket.on('new_message', () => loadChats());
+  socket.on('new_message', () => {
+    loadChats();
+    // также обновляем ленту если нужно (сообщения не влияют на ленту)
+  });
 }
 
 function loadChats() {
@@ -187,6 +338,7 @@ function createGroup() {
   .catch(err => console.error('Ошибка:', err));
 }
 
+// ===== НАВИГАЦИЯ (DOCK) =====
 const dockItems = document.querySelectorAll('.dock-item');
 const panels = {
   'panel-feed': document.getElementById('panel-feed'),
@@ -209,7 +361,6 @@ dockItems.forEach(item => {
 
 // ===== ЗАСТАВКА =====
 const splashShown = sessionStorage.getItem('splash_shown');
-
 if (splashShown) {
   splash.style.display = 'none';
   app.classList.add('app-visible');
@@ -254,5 +405,4 @@ if (splashShown) {
     }
   }, 1200);
 }
-
 console.log('🚀 Sklay мессенджер загружен!');

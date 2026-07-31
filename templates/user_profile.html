@@ -38,6 +38,15 @@
           <div class="profile-bio"><span class="bio-icon">📝</span><span>{{ user.bio or 'Этот пользователь пока ничего не рассказал о себе' }}</span></div>
         </div>
         <div class="profile-meta"><span>📅 {{ user.created_at[:10] if user.created_at else '—' }}</span><span>🔗 sklay.app/@{{ user.username }}</span></div>
+        {% if is_friend %}
+          <button class="btn-primary" onclick="startChat('{{ user.username }}')" style="margin-top:12px;">
+            <i class="fas fa-comment"></i> Написать
+          </button>
+        {% else %}
+          <button class="btn-secondary" onclick="addFriend('{{ user.username }}')" style="margin-top:12px;">
+            <i class="fas fa-user-plus"></i> Добавить в друзья
+          </button>
+        {% endif %}
       </div>
     </div>
 
@@ -56,6 +65,15 @@
                 <span class="post-date">{{ post.created_at[:10] if post.created_at else '' }}</span>
               </div>
               <div class="post-content">{{ post.content }}</div>
+              {% if post.media_url %}
+                {% if post.media_url.match('\.(mp4|webm|ogg)$') %}
+                  <video controls style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;">
+                    <source src="{{ post.media_url }}" type="video/mp4">
+                  </video>
+                {% else %}
+                  <img src="{{ post.media_url }}" style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;" alt="Изображение">
+                {% endif %}
+              {% endif %}
               <div class="post-actions"><span class="post-likes">❤️ {{ post.likes or 0 }}</span></div>
             </div>
           {% endfor %}
@@ -75,6 +93,48 @@
       </div>
     </div>
   </div>
-  <script src="/static/js/user_profile.js"></script>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    function startChat(username) {
+      fetch('/api/create_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.chat_id) {
+          window.location.href = '/chat/' + data.chat_id;
+        } else {
+          alert('Ошибка создания чата');
+        }
+      })
+      .catch(err => alert('Ошибка: ' + err));
+    }
+
+    function addFriend(username) {
+      fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Заявка отправлена!');
+        } else {
+          alert(data.error || 'Ошибка');
+        }
+      })
+      .catch(err => alert('Ошибка: ' + err));
+    }
+  </script>
 </body>
 </html>

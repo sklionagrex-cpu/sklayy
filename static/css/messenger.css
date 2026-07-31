@@ -208,3 +208,97 @@ body { font-family: 'Inter', sans-serif; background: #0b0b0f; color: #f0f0f5; he
   word-break: break-word;
   max-width: 60%;
 }
+
+/* ===== ЛЕНТА ===== */
+.feed-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.feed-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 4px;
+}
+.feed-author {
+  color: #5B6CFF;
+  font-weight: 600;
+}
+.community-label {
+  color: #a78bfa;
+  font-weight: 500;
+}
+.feed-date {
+  margin-left: auto;
+  color: #666;
+}
+.feed-content {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 6px 0 8px 0;
+}
+.feed-actions {
+  margin-top: 8px;
+}
+.feed-actions .btn-sm {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+.feed-actions .btn-sm:hover {
+  background: rgba(255,255,255,0.05);
+  color: #f0f0f5;
+}
+
+/* ===== СООБЩЕСТВА ===== */
+.communities-section h3 {
+  font-size: 16px;
+  color: #888;
+  margin-bottom: 8px;
+}
+.communities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.community-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.community-avatar {
+  font-size: 32px;
+}
+.community-info {
+  flex: 1;
+}
+.community-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+.community-desc {
+  font-size: 13px;
+  color: #888;
+}
+.badge {
+  background: rgba(91,108,255,0.15);
+  color: #5B6CFF;
+  padding: 2px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+}
