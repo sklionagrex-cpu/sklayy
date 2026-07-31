@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sklay - Редактировать профиль</title>
+  <link rel="stylesheet" href="/static/css/profile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="profile-container">
+    <div class="profile-header-fixed">
+      <div class="profile-top">
+        <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <span class="profile-title">Редактировать профиль</span>
+      </div>
+      <div class="profile-card">
+        <div class="avatar-section">
+          <div class="avatar-circle" id="avatarDisplay">
+            {% if user.avatar and user.avatar.startswith('/static/uploads/') %}
+              <img src="{{ user.avatar }}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            {% else %}
+              {{ user.avatar or '👤' }}
+            {% endif %}
+          </div>
+          <button class="avatar-edit" onclick="document.getElementById('avatarInput').click()"><i class="fas fa-camera"></i></button>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+        </div>
+        <div class="edit-group">
+          <div class="edit-row"><label>Полное имя</label><input type="text" id="edit-full_name" value="{{ user.full_name or '' }}"></div>
+          <div class="edit-row"><label>Email</label><input type="email" id="edit-email" value="{{ user.email or '' }}"></div>
+          <div class="edit-row"><label>Телефон</label><input type="tel" id="edit-phone" value="{{ user.phone or '' }}"></div>
+          <div class="edit-row"><label>О себе</label><textarea id="edit-bio" rows="3">{{ user.bio or '' }}</textarea></div>
+          <div class="edit-row"><label>Статус</label><input type="text" id="edit-status" value="{{ user.status or '' }}" placeholder="Введите ваш статус..."></div>
+          <div class="edit-buttons">
+            <button class="btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Сохранить</button>
+            <a href="/app" class="btn-secondary">Отмена</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/js/edit_profile.js"></script>
+</body>
+</html>
