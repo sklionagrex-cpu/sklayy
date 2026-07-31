@@ -40,8 +40,9 @@
       </div>
     </div>
 
+    <!-- ОСНОВНЫЕ ВКЛАДКИ ПРОФИЛЯ -->
     <div class="profile-tabs">
-      <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile')"><i class="fas fa-user"></i> Профиль</button>
+      <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile')"><i class="fas fa-user"></i> Информация</button>
       <button class="tab-btn" data-tab="posts" onclick="switchTab('posts')"><i class="fas fa-newspaper"></i> Посты</button>
       <button class="tab-btn" data-tab="friends" onclick="switchTab('friends')"><i class="fas fa-user-friends"></i> Друзья</button>
       <button class="tab-btn" data-tab="privacy" onclick="switchTab('privacy')"><i class="fas fa-shield-alt"></i> Приватность</button>
@@ -50,6 +51,7 @@
       <button class="tab-btn" data-tab="security" onclick="switchTab('security')"><i class="fas fa-lock"></i> Выход</button>
     </div>
 
+    <!-- ВКЛАДКА ИНФОРМАЦИЯ (только просмотр и редактирование) -->
     <div class="tab-content active" id="tab-profile">
       <div id="viewMode">
         <div class="info-group">
@@ -76,6 +78,7 @@
       </div>
     </div>
 
+    <!-- ВКЛАДКА ПОСТЫ -->
     <div class="tab-content" id="tab-posts">
       <div class="posts-header">
         <button class="btn-primary" onclick="openPostModal()"><i class="fas fa-plus"></i> Создать пост</button>
@@ -85,6 +88,7 @@
       </div>
     </div>
 
+    <!-- ВКЛАДКА ДРУЗЬЯ -->
     <div class="tab-content" id="tab-friends">
       <div class="friends-container">
         <div class="friends-search">
