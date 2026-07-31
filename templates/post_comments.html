@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Комментарии</title>
+  <link rel="stylesheet" href="/static/css/profile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="profile-container">
+    <div class="profile-header-fixed">
+      <div class="profile-top">
+        <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <span class="profile-title">Комментарии</span>
+      </div>
+    </div>
+
+    <div id="commentsList" class="comments-list">
+      <div class="empty-state">Загрузка комментариев...</div>
+    </div>
+
+    <div class="comment-input-area">
+      <div class="comment-input-wrapper">
+        <textarea id="commentContent" placeholder="Написать комментарий..." rows="2"></textarea>
+        <button class="send-btn" onclick="sendComment()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const postId = {{ post_id }};
+    let mediaUrl = null;
+
+    function loadComments() {
+      fetch(`/api/posts/${postId}/comments`)
+        .then(res => res.json())
+        .then(comments => {
+          const container = document.getElementById('commentsList');
+          if (!comments || comments.length === 0) {
+            container.innerHTML = '<div class="empty-state">Нет комментариев. Будьте первым!</div>';
+            return;
+          }
+          container.innerHTML = comments.map(c => {
+            let mediaHtml = '';
+            if (c.media_url) {
+              if (c.media_url.match(/\.(mp4|webm|ogg)$/i)) {
+                mediaHtml = `<video controls style="max-width:100%;max-height:200px;border-radius:8px;margin-top:4px;"><source src="${c.media_url}" type="video/mp4"></video>`;
+              } else {
+                mediaHtml = `<img src="${c.media_url}" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:4px;" alt="Изображение">`;
+              }
+            }
+            return `
+              <div class="comment-item">
+                <div class="comment-avatar">${c.avatar || '👤'}</div>
+                <div class="comment-body">
+                  <div class="comment-author">${c.full_name || c.username}</div>
+                  <div class="comment-text">${c.content}</div>
+                  ${mediaHtml}
+                  <div class="comment-time">${new Date(c.created_at).toLocaleString()}</div>
+                </div>
+                <button class="comment-delete" onclick="deleteComment(${c.id})" style="background:none;border:none;color:#888;cursor:pointer;"><i class="fas fa-trash"></i></button>
+              </div>
+            `;
+          }).join('');
+        })
+        .catch(err => console.error('Ошибка загрузки комментариев:', err));
+    }
+
+    function sendComment() {
+      const content = document.getElementById('commentContent').value.trim();
+      if (!content && !mediaUrl) {
+        alert('Введите текст или прикрепите медиа');
+        return;
+      }
+      const data = { content: content };
+      if (mediaUrl) data.media_url = mediaUrl;
+      fetch(`/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(() => {
+        document.getElementById('commentContent').value = '';
+        mediaUrl = null;
+        loadComments();
+      })
+      .catch(err => console.error('Ошибка отправки:', err));
+    }
+
+    function deleteComment(commentId) {
+      if (!confirm('Удалить комментарий?')) return;
+      fetch(`/api/comments/${commentId}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) loadComments();
+        })
+        .catch(err => console.error('Ошибка удаления:', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', loadComments);
+  </script>
+</body>
+</html>

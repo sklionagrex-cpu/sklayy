@@ -802,3 +802,62 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+# ===== КОММЕНТАРИИ =====
+@app.route('/api/posts/<int:post_id>/comments')
+def get_comments(post_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    comments = conn.execute('''
+        SELECT c.*, u.username, u.full_name, u.avatar
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.post_id = ?
+        ORDER BY c.created_at ASC
+    ''', (post_id,)).fetchall()
+    conn.close()
+    return jsonify([dict(c) for c in comments])
+
+@app.route('/api/posts/<int:post_id>/comments', methods=['POST'])
+def add_comment(post_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.json
+    content = data.get('content', '')
+    media_url = data.get('media_url', None)
+    if not content and not media_url:
+        return jsonify({'error': 'Content or media required'}), 400
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO comments (post_id, user_id, content, media_url, created_at) VALUES (?, ?, ?, ?, ?)',
+        (post_id, session['user_id'], content, media_url, datetime.now().isoformat())
+    )
+    comment_id = cursor.lastrowid
+    conn.commit()
+    comment = conn.execute('''
+        SELECT c.*, u.username, u.full_name, u.avatar
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.id = ?
+    ''', (comment_id,)).fetchone()
+    conn.close()
+    return jsonify(dict(comment))
+
+@app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    comment = conn.execute(
+        'SELECT * FROM comments WHERE id = ? AND user_id = ?',
+        (comment_id, session['user_id'])
+    ).fetchone()
+    if not comment:
+        conn.close()
+        return jsonify({'error': 'Comment not found'}), 404
+    conn.execute('DELETE FROM comments WHERE id = ?', (comment_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
