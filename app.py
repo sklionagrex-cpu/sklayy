@@ -633,3 +633,32 @@ def get_chat_users(chat_id):
     if users:
         return jsonify(dict(users[0]))
     return jsonify({'error': 'No users found'}), 404
+
+@app.route('/api/friends_with_chat')
+def get_friends_with_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    friends = conn.execute('''
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online,
+               (SELECT c.id FROM chats c
+                JOIN chat_members cm1 ON c.id = cm1.chat_id
+                JOIN chat_members cm2 ON c.id = cm2.chat_id
+                WHERE c.type = 'private'
+                AND cm1.user_id = ? AND cm2.user_id = u.id) as chat_id
+        FROM friends f
+        JOIN users u ON f.friend_id = u.id
+        WHERE f.user_id = ? AND f.status = 'accepted'
+        UNION
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online,
+               (SELECT c.id FROM chats c
+                JOIN chat_members cm1 ON c.id = cm1.chat_id
+                JOIN chat_members cm2 ON c.id = cm2.chat_id
+                WHERE c.type = 'private'
+                AND cm1.user_id = ? AND cm2.user_id = u.id) as chat_id
+        FROM friends f
+        JOIN users u ON f.user_id = u.id
+        WHERE f.friend_id = ? AND f.status = 'accepted'
+    ''', (session['user_id'], session['user_id'], session['user_id'], session['user_id'])).fetchall()
+    conn.close()
+    return jsonify([dict(f) for f in friends])
