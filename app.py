@@ -717,3 +717,31 @@ def edit_profile():
     user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     conn.close()
     return render_template('edit_profile.html', user=user)
+
+@app.route('/chat/<int:chat_id>')
+def chat_view(chat_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    chat = conn.execute('SELECT * FROM chats WHERE id = ?', (chat_id,)).fetchone()
+    members = conn.execute('''
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online
+        FROM chat_members cm JOIN users u ON cm.user_id = u.id
+        WHERE cm.chat_id = ?
+    ''', (chat_id,)).fetchall()
+    conn.close()
+    
+    # Получаем имя собеседника для личного чата
+    chat_name = chat['name']
+    if chat['type'] == 'private':
+        conn = get_db()
+        other = conn.execute('''
+            SELECT u.full_name, u.username FROM chat_members cm
+            JOIN users u ON cm.user_id = u.id
+            WHERE cm.chat_id = ? AND cm.user_id != ?
+        ''', (chat_id, session['user_id'])).fetchone()
+        conn.close()
+        if other:
+            chat_name = other['full_name'] or other['username']
+    
+    return render_template('chat.html', chat=chat, members=members, username=session.get('username'), chat_name=chat_name)
