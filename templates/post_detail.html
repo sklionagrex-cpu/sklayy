@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <style>
-    body { padding: 12px; background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; }
+    body { padding: 12px; padding-bottom: 100px; background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; margin: 0; }
     .back-btn { color: #f0f0f5; text-decoration: none; font-size: 24px; display: inline-block; margin-bottom: 16px; }
     .post-card { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 16px; }
     .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
@@ -22,8 +22,7 @@
     .post-media img, .post-media video { width: 100%; max-height: 400px; object-fit: cover; border-radius: 12px; }
     .post-actions { display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04); }
     .post-actions button { background: none; border: none; color: #888; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .post-actions button.liked { color: #ff6b6b; }
-    .comments-section { margin-top: 16px; }
+    .comments-section { margin-top: 16px; padding-bottom: 80px; }
     .comments-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: #f0f0f5; }
     .comment-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .comment-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(91,108,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; flex-shrink: 0; }
@@ -35,7 +34,7 @@
     .comment-media img, .comment-media video { max-width: 100%; max-height: 200px; border-radius: 8px; }
     .comment-time { font-size: 12px; color: #666; }
     .comment-delete { background: none; border: none; color: #888; cursor: pointer; padding: 4px; }
-    .comment-input-area { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: rgba(11,11,15,0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.05); }
+    .comment-input-area { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: rgba(11,11,15,0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; }
     .comment-input-wrapper { display: flex; gap: 10px; align-items: flex-end; }
     .comment-input-wrapper textarea { flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #f0f0f5; font-family: 'Inter', sans-serif; font-size: 15px; resize: none; outline: none; min-height: 40px; max-height: 120px; }
     .comment-input-wrapper textarea:focus { border-color: #5B6CFF; background: rgba(255,255,255,0.08); }
@@ -46,7 +45,7 @@
     .empty-title { font-size: 18px; font-weight: 500; color: #888; }
     .empty-text { font-size: 14px; color: #666; margin-top: 4px; }
     @media (max-width: 480px) {
-      body { padding: 8px; }
+      body { padding: 8px; padding-bottom: 80px; }
       .post-card { padding: 12px; }
       .post-avatar { width: 36px; height: 36px; font-size: 18px; }
       .post-content { font-size: 15px; }
@@ -74,7 +73,6 @@
   <script>
     const postId = {{ post_id }};
     const currentUserId = {{ session['user_id'] }};
-    let mediaUrl = null;
     function loadPost() {
       fetch('/api/feed')
         .then(res => res.json())
@@ -102,7 +100,7 @@
               <div class="post-content">${post.content}</div>
               ${mediaHtml}
               <div class="post-actions">
-                <button onclick="likePost(${post.id})" id="likeBtn">❤️ ${post.likes || 0}</button>
+                <button onclick="likePost(${post.id})">❤️ ${post.likes || 0}</button>
               </div>
             </div>
           `;
@@ -163,6 +161,8 @@
         input.value = '';
         input.style.height = 'auto';
         loadComments();
+        // Прокрутка вниз после отправки
+        setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
       })
       .catch(err => console.error('Ошибка отправки:', err));
     }
@@ -180,6 +180,8 @@
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
       });
+      // Прокрутка к последнему комментарию при загрузке
+      setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 300);
     });
   </script>
 </body>
