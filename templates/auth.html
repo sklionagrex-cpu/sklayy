@@ -2,42 +2,154 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0b0f">
-  <title>Sklay — {% if mode == 'login' %}Вход{% else %}Регистрация{% endif %}</title>
-  <link rel="stylesheet" href="/static/css/auth.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sklay - {% if mode == 'login' %}Вход{% else %}Регистрация{% endif %}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0b0b0f;
+      color: #f0f0f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 48px;
+      font-weight: 700;
+      color: #5B6CFF;
+      margin-bottom: 8px;
+      text-shadow: 0 0 40px rgba(91,108,255,0.2);
+    }
+    .subtitle {
+      color: #888;
+      font-size: 16px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .card h2 {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .card input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      color: #f0f0f5;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s;
+      margin-bottom: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+    .card input:focus {
+      border-color: #5B6CFF;
+      background: rgba(255,255,255,0.08);
+    }
+    .card input::placeholder {
+      color: #666;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+      margin-top: 4px;
+    }
+    .btn-primary {
+      background: #5B6CFF;
+      color: #fff;
+      box-shadow: 0 0 30px rgba(91,108,255,0.2);
+    }
+    .btn-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px rgba(91,108,255,0.4);
+    }
+    .switch {
+      text-align: center;
+      margin-top: 16px;
+      color: #888;
+      font-size: 14px;
+    }
+    .switch a {
+      color: #5B6CFF;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .switch a:hover {
+      color: #8a9bff;
+    }
+    .error {
+      background: rgba(255,70,70,0.1);
+      border: 1px solid rgba(255,70,70,0.2);
+      color: #ff6b6b;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .footer {
+      margin-top: 40px;
+      color: #555;
+      font-size: 13px;
+      text-align: center;
+    }
+    .footer span {
+      color: #5B6CFF;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-logo">◈ Sklay</div>
-      
+  <div class="logo">◈ Sklay</div>
+  <div class="subtitle">{% if mode == 'login' %}Войдите в аккаунт{% else %}Создайте аккаунт{% endif %}</div>
+
+  <div class="card">
+    <h2>{% if mode == 'login' %}Вход{% else %}Регистрация{% endif %}</h2>
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="POST" action="{% if mode == 'login' %}/login{% else %}/register{% endif %}">
+      <input type="text" name="username" placeholder="Имя пользователя" required autofocus>
+      <input type="password" name="password" placeholder="Пароль" required>
+      {% if mode == 'register' %}
+        <input type="password" name="confirm" placeholder="Подтвердите пароль" required>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">
+        {% if mode == 'login' %}Войти{% else %}Создать аккаунт{% endif %}
+      </button>
+    </form>
+    <div class="switch">
       {% if mode == 'login' %}
-        <h1>Вход</h1>
-        <form method="POST" action="/login" autocomplete="on">
-          <input type="text" name="username" placeholder="Имя пользователя" required autofocus>
-          <input type="password" name="password" placeholder="Пароль" required>
-          {% if error %}
-            <div class="auth-error">{{ error }}</div>
-          {% endif %}
-          <button type="submit" class="btn-primary">Войти</button>
-        </form>
-        <p class="auth-switch">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
       {% else %}
-        <h1>Регистрация</h1>
-        <form method="POST" action="/register" autocomplete="on">
-          <input type="text" name="username" placeholder="Имя пользователя" required autofocus>
-          <input type="password" name="password" placeholder="Пароль" required>
-          <input type="password" name="confirm" placeholder="Подтвердите пароль" required>
-          {% if error %}
-            <div class="auth-error">{{ error }}</div>
-          {% endif %}
-          <button type="submit" class="btn-primary">Создать аккаунт</button>
-        </form>
-        <p class="auth-switch">Уже есть аккаунт? <a href="/login">Войти</a></p>
+        Уже есть аккаунт? <a href="/login">Войти</a>
       {% endif %}
     </div>
   </div>
+
+  <div class="footer">Prod by <span>Skleo</span></div>
 </body>
 </html>
