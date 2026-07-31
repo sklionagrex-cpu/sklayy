@@ -709,3 +709,12 @@ def edit_profile():
     user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     conn.close()
     return render_template('edit_profile.html', user=user)
+
+@app.route('/profile/edit')
+def edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    conn.close()
+    return render_template('edit_profile.html', user=user)
