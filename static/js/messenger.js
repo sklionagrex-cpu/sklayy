@@ -4,6 +4,7 @@ const app = document.getElementById('app');
 
 let socket = null;
 let currentUser = {};
+let mediaUrl = null;
 
 function initApp() {
   console.log('🚀 Инициализация мессенджера');
@@ -43,57 +44,6 @@ function initApp() {
     }
   });
   feedObserver.observe(feedPanel, { attributes: true, attributeFilter: ['class'] });
-}
-
-function loadFriendsChats() {
-  fetch('/api/friends_with_chat')
-    .then(res => res.json())
-    .then(friends => {
-      const container = document.getElementById('friendsChatList');
-      if (!friends || friends.length === 0) {
-        container.innerHTML = '<div class="empty-state">Нет друзей для чата</div>';
-        return;
-      }
-      container.innerHTML = `
-        <div class="section-label">👥 Друзья</div>
-        ${friends.map(f => {
-          const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
-            ? `<img src="${f.avatar}" alt="Avatar">`
-            : (f.avatar || '👤');
-          return `
-            <div class="chat-item" onclick="openChatOrCreate(${f.chat_id}, '${f.username}')">
-              <div class="chat-avatar">${avatarHtml}</div>
-              <div class="chat-info">
-                <div class="chat-name">${f.full_name || f.username}</div>
-                <div class="chat-preview">${f.online ? '🟢 Онлайн' : '⚪ Не в сети'}</div>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      `;
-    })
-    .catch(err => console.error('Ошибка загрузки друзей:', err));
-}
-
-function openChatOrCreate(chatId, username) {
-  if (chatId) {
-    window.location.href = `/chat/${chatId}`;
-  } else {
-    fetch('/api/create_chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.chat_id) {
-        window.location.href = `/chat/${data.chat_id}`;
-      } else {
-        alert('Ошибка создания чата');
-      }
-    })
-    .catch(err => alert('Ошибка: ' + err));
-  }
 }
 
 function loadFeed() {
@@ -259,6 +209,8 @@ function loadProfileData() {
     .then(user => {
       updateProfilePanel(user);
       loadPanelPosts();
+      loadFriends();
+      loadFriendRequests();
     })
     .catch(err => console.error('Ошибка загрузки профиля:', err));
 }
@@ -290,7 +242,8 @@ function loadPanelPosts() {
             <div class="post-content">${post.content}</div>
             ${mediaHtml}
             <div class="post-actions">
-              <span class="post-likes">❤️ ${post.likes || 0}</span>
+              <button class="btn-sm" onclick="likePostInProfile(${post.id})">❤️ ${post.likes || 0}</button>
+              <button class="btn-sm" onclick="deletePostInProfile(${post.id})">🗑️</button>
             </div>
           </div>
         `;
@@ -299,11 +252,328 @@ function loadPanelPosts() {
     .catch(err => console.error('Ошибка загрузки постов:', err));
 }
 
+function likePostInProfile(postId) {
+  fetch(`/api/posts/${postId}/like`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => { if (data.success) loadPanelPosts(); })
+    .catch(err => console.error('Ошибка:', err));
+}
+
+function deletePostInProfile(postId) {
+  if (!confirm('Удалить пост?')) return;
+  fetch(`/api/posts/${postId}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => { if (data.success) loadPanelPosts(); })
+    .catch(err => console.error('Ошибка:', err));
+}
+
 function switchProfileSubTab(tab) {
   document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
   document.querySelector(`.sub-tab[data-subtab="${tab}"]`).classList.add('active');
   document.getElementById(`subtab-${tab}`).classList.add('active');
+  
+  if (tab === 'friends') {
+    loadFriends();
+    loadFriendRequests();
+  }
+  if (tab === 'posts') {
+    loadPanelPosts();
+  }
+}
+
+function openPostModal() {
+  document.getElementById('postModal').style.display = 'flex';
+  document.getElementById('postContent').value = '';
+  document.getElementById('postContent').focus();
+  mediaUrl = null;
+  document.getElementById('mediaFileName').textContent = '';
+  document.getElementById('removeMediaBtn').style.display = 'none';
+  document.getElementById('mediaInput').value = '';
+}
+
+function closePostModal() {
+  document.getElementById('postModal').style.display = 'none';
+}
+
+function uploadMedia(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Неподдерживаемый формат');
+    input.value = '';
+    return;
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    alert('Файл слишком большой (макс. 50MB)');
+    input.value = '';
+    return;
+  }
+  const formData = new FormData();
+  formData.append('media', file);
+  fetch('/api/upload_media', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.url) {
+      mediaUrl = data.url;
+      document.getElementById('mediaFileName').textContent = file.name;
+      document.getElementById('removeMediaBtn').style.display = 'inline-block';
+    }
+  })
+  .catch(err => alert('Ошибка загрузки'));
+  input.value = '';
+}
+
+function removeMedia() {
+  mediaUrl = null;
+  document.getElementById('mediaFileName').textContent = '';
+  document.getElementById('removeMediaBtn').style.display = 'none';
+  document.getElementById('mediaInput').value = '';
+}
+
+function publishPost() {
+  const content = document.getElementById('postContent').value.trim();
+  if (!content && !mediaUrl) {
+    alert('Введите текст или прикрепите медиа');
+    return;
+  }
+  const data = { content: content };
+  if (mediaUrl) data.media_url = mediaUrl;
+  fetch('/api/posts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      closePostModal();
+      loadPanelPosts();
+      loadFeed();
+    }
+  })
+  .catch(err => console.error('Ошибка:', err));
+}
+
+function loadFriends() {
+  fetch('/api/friends')
+    .then(res => res.json())
+    .then(friends => {
+      const container = document.getElementById('friendsList');
+      if (!friends || friends.length === 0) {
+        container.innerHTML = '<div class="empty-state">У вас пока нет друзей</div>';
+        return;
+      }
+      container.innerHTML = friends.map(f => {
+        const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
+          ? `<img src="${f.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : (f.avatar || '👤');
+        return `
+          <div class="friend-item">
+            <div class="friend-avatar">${avatarHtml}</div>
+            <div class="friend-info">
+              <div class="friend-name">${f.full_name || f.username}</div>
+              <div class="friend-username">@${f.username}</div>
+            </div>
+            <div class="friend-status">${f.online ? '🟢 Онлайн' : '⚪ Офлайн'}</div>
+            <button class="chat-btn" onclick="openChatWith('${f.username}')" title="Написать">
+              <i class="fas fa-comment"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error('Ошибка загрузки друзей:', err));
+}
+
+function loadFriendRequests() {
+  fetch('/api/friend_requests')
+    .then(res => res.json())
+    .then(requests => {
+      const container = document.getElementById('friendRequests');
+      if (!requests || requests.length === 0) {
+        container.innerHTML = '<div class="empty-state">Нет входящих заявок</div>';
+        return;
+      }
+      container.innerHTML = requests.map(req => {
+        const avatarHtml = req.avatar && req.avatar.startsWith('/static/uploads/')
+          ? `<img src="${req.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : (req.avatar || '👤');
+        return `
+          <div class="friend-item">
+            <div class="friend-avatar">${avatarHtml}</div>
+            <div class="friend-info">
+              <div class="friend-name">${req.full_name || req.username}</div>
+              <div class="friend-username">@${req.username}</div>
+            </div>
+            <div class="friend-actions">
+              <button class="btn-sm accept" onclick="acceptFriend(${req.request_id})">✓</button>
+              <button class="btn-sm reject" onclick="rejectFriend(${req.request_id})">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error('Ошибка загрузки заявок:', err));
+}
+
+function switchFriendTab(tab) {
+  document.querySelectorAll('.friend-tab').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.friend-tab[data-ftab="${tab}"]`).classList.add('active');
+  if (tab === 'list') {
+    document.getElementById('friendsList').style.display = 'block';
+    document.getElementById('friendRequests').style.display = 'none';
+    loadFriends();
+  } else {
+    document.getElementById('friendsList').style.display = 'none';
+    document.getElementById('friendRequests').style.display = 'block';
+    loadFriendRequests();
+  }
+}
+
+function searchUsers(query) {
+  const resultsContainer = document.getElementById('searchResults');
+  if (query.length < 2) {
+    resultsContainer.style.display = 'none';
+    return;
+  }
+  fetch(`/api/users?search=${encodeURIComponent(query)}`)
+    .then(res => res.json())
+    .then(users => {
+      if (!users || users.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-empty">Пользователи не найдены</div>';
+        resultsContainer.style.display = 'block';
+        return;
+      }
+      resultsContainer.innerHTML = users.map(u => `
+        <div class="search-result">
+          <span>${u.full_name || u.username} (@${u.username})</span>
+          <button class="btn-sm" onclick="sendFriendRequest('${u.username}')">➕</button>
+        </div>
+      `).join('');
+      resultsContainer.style.display = 'block';
+    })
+    .catch(err => console.error('Ошибка поиска:', err));
+}
+
+function sendFriendRequest(username) {
+  fetch('/api/friends', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert('Заявка отправлена!');
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('searchUsers').value = '';
+    } else {
+      alert(data.error || 'Ошибка');
+    }
+  })
+  .catch(err => alert('Ошибка: ' + err));
+}
+
+function openChatWith(username) {
+  fetch('/api/create_chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.chat_id) {
+      window.location.href = '/chat/' + data.chat_id;
+    } else {
+      alert('Ошибка создания чата');
+    }
+  })
+  .catch(err => alert('Ошибка: ' + err));
+}
+
+function addFriend() {
+  const username = prompt('Введите имя пользователя:');
+  if (!username || !username.trim()) return;
+  sendFriendRequest(username.trim());
+}
+
+function acceptFriend(requestId) {
+  fetch(`/api/friends/${requestId}`, { method: 'PUT' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        loadFriendRequests();
+        loadFriends();
+      }
+    })
+    .catch(err => console.error('Ошибка:', err));
+}
+
+function rejectFriend(requestId) {
+  fetch(`/api/friends/${requestId}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        loadFriendRequests();
+      }
+    })
+    .catch(err => console.error('Ошибка:', err));
+}
+
+function loadFriendsChats() {
+  fetch('/api/friends_with_chat')
+    .then(res => res.json())
+    .then(friends => {
+      const container = document.getElementById('friendsChatList');
+      if (!friends || friends.length === 0) {
+        container.innerHTML = '<div class="empty-state">Нет друзей для чата</div>';
+        return;
+      }
+      container.innerHTML = `
+        <div class="section-label">👥 Друзья</div>
+        ${friends.map(f => {
+          const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
+            ? `<img src="${f.avatar}" alt="Avatar">`
+            : (f.avatar || '👤');
+          return `
+            <div class="chat-item" onclick="openChatOrCreate(${f.chat_id}, '${f.username}')">
+              <div class="chat-avatar">${avatarHtml}</div>
+              <div class="chat-info">
+                <div class="chat-name">${f.full_name || f.username}</div>
+                <div class="chat-preview">${f.online ? '🟢 Онлайн' : '⚪ Не в сети'}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    })
+    .catch(err => console.error('Ошибка загрузки друзей:', err));
+}
+
+function openChatOrCreate(chatId, username) {
+  if (chatId) {
+    window.location.href = `/chat/${chatId}`;
+  } else {
+    fetch('/api/create_chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.chat_id) {
+        window.location.href = `/chat/${data.chat_id}`;
+      } else {
+        alert('Ошибка создания чата');
+      }
+    })
+    .catch(err => alert('Ошибка: ' + err));
+  }
 }
 
 function connectSocket() {

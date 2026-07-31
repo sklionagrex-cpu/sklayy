@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <!-- ПРОФИЛЬ (ГЛАВНЫЙ, С ВКЛАДКАМИ) -->
+      <!-- ПРОФИЛЬ -->
       <div class="panel panel-profile" id="panel-profile">
         <div class="panel-header">
           <h2>Мой аккаунт</h2>
@@ -81,14 +81,14 @@
           <!-- Информация -->
           <div class="sub-tab-content active" id="subtab-info">
             <div class="info-group">
-              <div class="info-row"><span class="info-label">Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
-              <div class="info-row"><span class="info-label">Статус</span><span class="info-value" id="panelStatusFull">Не установлен</span></div>
-              <div class="info-row"><span class="info-label">О себе</span><span class="info-value" id="panelBioFull">Не указано</span></div>
-              <div class="info-row"><span class="info-label">Регистрация</span><span class="info-value" id="panelCreatedAt">—</span></div>
+              <div class="info-row"><span class="info-label">👤 Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
+              <div class="info-row"><span class="info-label">💬 Статус</span><span class="info-value" id="panelStatusFull">Не установлен</span></div>
+              <div class="info-row"><span class="info-label">📝 О себе</span><span class="info-value" id="panelBioFull">Не указано</span></div>
+              <div class="info-row"><span class="info-label">📅 Регистрация</span><span class="info-value" id="panelCreatedAt">—</span></div>
             </div>
           </div>
 
-          <!-- Посты -->
+          <!-- ПОСТЫ -->
           <div class="sub-tab-content" id="subtab-posts">
             <div class="posts-header">
               <button class="btn-primary" onclick="openPostModal()"><i class="fas fa-plus"></i> Создать пост</button>
@@ -98,11 +98,11 @@
             </div>
           </div>
 
-          <!-- Друзья -->
+          <!-- ДРУЗЬЯ (красиво) -->
           <div class="sub-tab-content" id="subtab-friends">
             <div class="friends-container">
               <div class="friends-search">
-                <input type="text" id="searchUsers" placeholder="Поиск пользователей..." oninput="searchUsers(this.value)">
+                <input type="text" id="searchUsers" placeholder="Поиск друзей..." oninput="searchUsers(this.value)">
                 <button class="btn-primary" onclick="addFriend()"><i class="fas fa-user-plus"></i> Добавить</button>
               </div>
               <div id="searchResults" class="search-results" style="display:none;"></div>
@@ -127,7 +127,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно для поста -->
+  <!-- Модалка поста -->
   <div id="postModal" class="modal" style="display:none;">
     <div class="modal-overlay" onclick="closePostModal()"></div>
     <div class="modal-content">
