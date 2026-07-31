@@ -602,3 +602,9 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+@app.route('/post/<int:post_id>')
+def post_detail(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('post_detail.html', post_id=post_id)
