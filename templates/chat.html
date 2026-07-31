@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sklay — Чат</title>
+</head>
+<body>
+    <h1>Чат</h1>
+    <p>Чат ID: {{ chat.id }}</p>
+    <p>Название: {{ chat.name or 'Без названия' }}</p>
+    <p>Участников: {{ members|length }}</p>
+    <a href="/app">Назад</a>
+</body>
+</html>

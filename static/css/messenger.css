@@ -1,0 +1,210 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0b0b0f; color: #f0f0f5; height: 100vh; overflow: hidden; }
+#splash { position: fixed; top:0; left:0; width:100%; height:100%; background:#0b0b0f; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:999; transition:opacity 0.8s; }
+#splash.splash-hidden { opacity:0; pointer-events:none; }
+.splash-logo { font-size:72px; font-weight:700; color:#5B6CFF; text-shadow:0 0 60px rgba(91,108,255,0.4); animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.05);opacity:0.8;} }
+.splash-message { margin-top:30px; font-size:18px; color:#b0b0c8; }
+#app { height:100vh; display:flex; flex-direction:column; opacity:0; transition:opacity 0.8s; }
+#app.app-visible { opacity:1; }
+.panels-container { flex:1; display:flex; gap:12px; padding:20px 20px 90px 20px; overflow:hidden; }
+.panel { flex:1; background:rgba(255,255,255,0.03); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.06); border-radius:24px; display:none; flex-direction:column; overflow:hidden; }
+.panel.active { display:flex; }
+.panel-header { padding:20px 24px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); flex-shrink:0; }
+.panel-header h2 { font-size:20px; font-weight:600; }
+.panel-actions { display:flex; gap:12px; align-items:center; }
+.search-input { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:30px; padding:8px 16px; color:#f0f0f5; font-size:14px; outline:none; width:200px; font-family:'Inter',sans-serif; }
+.search-input:focus { border-color:#5B6CFF; background:rgba(255,255,255,0.08); }
+.search-input::placeholder { color:#666; }
+.btn-icon { background:none; border:none; color:#f0f0f5; font-size:20px; cursor:pointer; padding:4px 8px; border-radius:8px; transition:all 0.2s; }
+.btn-icon:hover { color:#5B6CFF; background:rgba(91,108,255,0.1); }
+.panel-content { flex:1; padding:16px 24px; overflow-y:auto; }
+.panel-content::-webkit-scrollbar { width:4px; }
+.panel-content::-webkit-scrollbar-thumb { background:rgba(91,108,255,0.3); border-radius:10px; }
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; padding:40px 20px; }
+.empty-icon { font-size:64px; margin-bottom:20px; opacity:0.3; }
+.empty-title { font-size:20px; font-weight:600; color:#f0f0f5; margin-bottom:8px; }
+.empty-text { color:#888; font-size:15px; max-width:300px; line-height:1.6; }
+.chat-list { display:flex; flex-direction:column; gap:4px; }
+.chat-item { display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:16px; transition:all 0.3s; cursor:pointer; }
+.chat-item:hover { background:rgba(255,255,255,0.05); transform:translateY(-2px); }
+.chat-avatar { width:44px; height:44px; border-radius:50%; background:rgba(91,108,255,0.15); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.chat-info { flex:1; min-width:0; }
+.chat-name { font-weight:600; font-size:15px; }
+.chat-preview { color:#888; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chat-time { color:#666; font-size:12px; flex-shrink:0; }
+.profile-content { display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:20px; }
+.profile-avatar { width:80px; height:80px; border-radius:50%; background:rgba(91,108,255,0.15); display:flex; align-items:center; justify-content:center; font-size:40px; border:3px solid rgba(91,108,255,0.2); }
+.profile-name { font-size:20px; font-weight:700; }
+.btn-primary { background:#5B6CFF; border:none; color:#fff; padding:10px 24px; border-radius:30px; font-weight:600; font-size:15px; cursor:pointer; transition:all 0.3s; text-decoration:none; display:inline-block; text-align:center; font-family:'Inter',sans-serif; }
+.btn-primary:hover { transform:scale(1.03); box-shadow:0 0 30px rgba(91,108,255,0.4); }
+.btn-primary.full-width { width:100%; }
+.btn-danger { background:rgba(255,70,70,0.1); border:1px solid rgba(255,70,70,0.2); color:#ff6b6b; padding:10px 24px; border-radius:30px; font-weight:600; font-size:15px; cursor:pointer; transition:all 0.3s; text-decoration:none; display:inline-block; text-align:center; font-family:'Inter',sans-serif; }
+.btn-danger:hover { background:rgba(255,70,70,0.2); transform:scale(1.03); }
+.btn-danger.full-width { width:100%; }
+.dock { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:8px; background:rgba(11,11,15,0.7); backdrop-filter:blur(20px); padding:8px 16px; border-radius:18px; border:1px solid rgba(255,255,255,0.06); box-shadow:0 8px 32px rgba(0,0,0,0.5); z-index:100; }
+.dock-item { display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 20px; border-radius:14px; cursor:pointer; transition:all 0.3s; color:#888; min-width:60px; border:none; background:none; font-family:'Inter',sans-serif; }
+.dock-item i { font-size:22px; transition:all 0.3s; }
+.dock-item span { font-size:11px; transition:all 0.3s; }
+.dock-item:hover { color:#f0f0f5; }
+.dock-item.active { color:#fff; }
+.dock-item.active i { transform:scale(1.2); color:#5B6CFF; text-shadow:0 0 20px rgba(91,108,255,0.4); }
+.dock-item.active span { color:#5B6CFF; }
+.dock-item.active { background:rgba(91,108,255,0.1); }
+@media (max-width:768px) { .panels-container { padding:12px 12px 80px 12px; gap:8px; flex-direction:column; } .panel { flex:1; min-height:0; } .panel-header { padding:14px 16px; } .panel-header h2 { font-size:17px; } .panel-content { padding:12px 16px; } .dock { padding:6px 12px; gap:4px; bottom:12px; } .dock-item { padding:6px 12px; min-width:40px; } .dock-item i { font-size:18px; } .dock-item span { font-size:10px; } .search-input { width:120px; font-size:13px; padding:6px 12px; } }
+
+/* Иконка редактирования в панели профиля */
+.icon-link {
+  color: #888;
+  font-size: 18px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.icon-link:hover {
+  color: #5B6CFF;
+  background: rgba(91,108,255,0.1);
+}
+
+/* ===== ПОДВКЛАДКИ В ПРОФИЛЕ ===== */
+.profile-sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px 0;
+  width: 100%;
+  justify-content: center;
+}
+.sub-tab {
+  padding: 6px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+.sub-tab:hover {
+  color: #f0f0f5;
+  background: rgba(255,255,255,0.06);
+}
+.sub-tab.active {
+  background: rgba(91,108,255,0.15);
+  border-color: rgba(91,108,255,0.3);
+  color: #5B6CFF;
+}
+.sub-tab i {
+  margin-right: 4px;
+}
+
+.sub-tab-content {
+  display: none;
+  width: 100%;
+  margin-top: 4px;
+}
+.sub-tab-content.active {
+  display: block;
+}
+
+/* Стили для постов внутри панели профиля */
+#panelPostsList .post-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+#panelPostsList .post-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 4px;
+}
+#panelPostsList .post-author {
+  color: #5B6CFF;
+  font-weight: 600;
+}
+#panelPostsList .post-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #e0e0e8;
+}
+#panelPostsList .post-actions {
+  margin-top: 6px;
+}
+#panelPostsList .post-likes {
+  color: #888;
+  font-size: 13px;
+}
+
+/* ===== КРАСИВАЯ ИНФОРМАЦИЯ В ПАНЕЛИ ПРОФИЛЯ ===== */
+#subtab-info .info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#subtab-info .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.2s;
+}
+#subtab-info .info-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(91,108,255,0.15);
+}
+#subtab-info .info-label {
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+}
+#subtab-info .info-value {
+  color: #f0f0f5;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}
+
+/* ===== КРАСИВАЯ ИНФОРМАЦИЯ В ПАНЕЛИ ПРОФИЛЯ ===== */
+#subtab-info .info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#subtab-info .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.2s;
+}
+#subtab-info .info-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(91,108,255,0.15);
+}
+#subtab-info .info-label {
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+}
+#subtab-info .info-value {
+  color: #f0f0f5;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}

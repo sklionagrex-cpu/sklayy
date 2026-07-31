@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sklay — новое поколение общения</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <div class="bg-glow left"></div>
+  <div class="bg-glow right"></div>
+
+  <header>
+    <div class="logo"><span class="crystal">◈</span> Sklay</div>
+    <nav><a href="#">Возможности</a></nav>
+    <div class="auth-buttons">
+      <a href="/login" class="btn-outline">Войти</a>
+      <a href="/register" class="btn-primary">Создать аккаунт</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-content">
+      <span class="badge">НОВОЕ ПОКОЛЕНИЕ ОБЩЕНИЯ</span>
+      <h1>Общайтесь <span class="highlight">быстро</span>.<br>Работайте вместе.<br>Без ограничений.</h1>
+      <p class="description">Sklay объединяет личные сообщения, группы, голосовые комнаты, совместную работу и обмен файлами в одном современном пространстве.</p>
+      <div class="cta-buttons">
+        <a href="/register" class="btn-primary large">✦ Создать бесплатно</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="app-preview">
+        <div class="preview-header">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="preview-title">Sklay</span>
+        </div>
+        <div class="preview-body">
+          <div style="color:#888;text-align:center;padding:40px 0;font-size:24px;">✦</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature-card" data-delay="0">
+      <div class="feature-icon">⚡</div>
+      <h3>Мгновенные сообщения</h3>
+      <p>Сообщения приходят практически мгновенно.</p>
+    </div>
+    <div class="feature-card" data-delay="100">
+      <div class="feature-icon">👥</div>
+      <h3>Общие пространства</h3>
+      <p>Команды, друзья, сообщества.</p>
+    </div>
+    <div class="feature-card" data-delay="200">
+      <div class="feature-icon">📁</div>
+      <h3>Передача файлов</h3>
+      <p>Файлы до нескольких гигабайт.</p>
+    </div>
+    <div class="feature-card" data-delay="300">
+      <div class="feature-icon">🔒</div>
+      <h3>Конфиденциальность</h3>
+      <p>Сквозное шифрование.</p>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat-item"><span class="stat-number" data-target="99.99">0</span><span class="stat-label">% Время работы</span></div>
+    <div class="stat-item"><span class="stat-number" data-target="50">0</span><span class="stat-label">мс Средняя задержка</span></div>
+    <div class="stat-item"><span class="stat-number" data-target="256">0</span><span class="stat-label">-bit Шифрование</span></div>
+    <div class="stat-item"><span class="stat-number" data-target="∞">∞</span><span class="stat-label">История сообщений</span></div>
+  </section>
+
+  <section class="cta-big">
+    <h2>Начните пользоваться Sklay уже сегодня.</h2>
+    <a href="/register" class="btn-primary large">Создать аккаунт</a>
+  </section>
+
+  <footer>
+    <div class="footer-col"><span class="logo">◈ Sklay</span></div>
+    <div class="footer-col"><a href="#">О компании</a><a href="#">Политика</a><a href="#">Поддержка</a></div>
+    <div class="footer-col"><a href="#">API</a><a href="#">GitHub</a><a href="#">Контакты</a></div>
+    <div class="footer-copy">© 2026 Sklay</div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

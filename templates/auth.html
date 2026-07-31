@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0f">
+  <title>Sklay — {% if mode == 'login' %}Вход{% else %}Регистрация{% endif %}</title>
+  <link rel="stylesheet" href="/static/css/auth.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">◈ Sklay</div>
+      
+      {% if mode == 'login' %}
+        <h1>Вход</h1>
+        <form method="POST" action="/login" autocomplete="on">
+          <input type="text" name="username" placeholder="Имя пользователя" required autofocus>
+          <input type="password" name="password" placeholder="Пароль" required>
+          {% if error %}
+            <div class="auth-error">{{ error }}</div>
+          {% endif %}
+          <button type="submit" class="btn-primary">Войти</button>
+        </form>
+        <p class="auth-switch">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+      {% else %}
+        <h1>Регистрация</h1>
+        <form method="POST" action="/register" autocomplete="on">
+          <input type="text" name="username" placeholder="Имя пользователя" required autofocus>
+          <input type="password" name="password" placeholder="Пароль" required>
+          <input type="password" name="confirm" placeholder="Подтвердите пароль" required>
+          {% if error %}
+            <div class="auth-error">{{ error }}</div>
+          {% endif %}
+          <button type="submit" class="btn-primary">Создать аккаунт</button>
+        </form>
+        <p class="auth-switch">Уже есть аккаунт? <a href="/login">Войти</a></p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

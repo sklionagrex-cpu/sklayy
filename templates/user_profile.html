@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ user.full_name or user.username }} — Sklay</title>
+  <link rel="stylesheet" href="/static/css/profile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="profile-container">
+    <div class="profile-header-fixed">
+      <div class="profile-top">
+        <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <span class="profile-title">Профиль</span>
+      </div>
+      <div class="profile-card">
+        <div class="avatar-section">
+          <div class="avatar-circle">
+            {% if user.avatar and user.avatar.startswith('/static/uploads/') %}
+              <img src="{{ user.avatar }}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            {% else %}
+              {{ user.avatar or '👤' }}
+            {% endif %}
+          </div>
+          <div class="online-status">
+            <span class="status-dot {{ 'online' if user.online else 'offline' }}"></span>
+            {{ 'Онлайн' if user.online else 'Не в сети' }}
+          </div>
+        </div>
+        <div class="profile-name">{{ user.full_name or user.username }}</div>
+        <div class="profile-username">@{{ user.username }}</div>
+        <div class="profile-status-wrap">
+          <div class="profile-status"><span class="status-icon">💫</span><span>{{ user.status or 'Нет статуса' }}</span></div>
+        </div>
+        <div class="profile-bio-wrap">
+          <div class="profile-bio"><span class="bio-icon">📝</span><span>{{ user.bio or 'Этот пользователь пока ничего не рассказал о себе' }}</span></div>
+        </div>
+        <div class="profile-meta"><span>📅 {{ user.created_at[:10] if user.created_at else '—' }}</span><span>🔗 sklay.app/@{{ user.username }}</span></div>
+      </div>
+    </div>
+
+    <div class="profile-tabs">
+      <button class="tab-btn active" data-tab="posts" onclick="switchTab('posts')"><i class="fas fa-newspaper"></i> Посты</button>
+      <button class="tab-btn" data-tab="about" onclick="switchTab('about')"><i class="fas fa-info-circle"></i> О пользователе</button>
+    </div>
+
+    <div class="tab-content active" id="tab-posts">
+      <div id="postsList" class="posts-list">
+        {% if posts and posts|length > 0 %}
+          {% for post in posts %}
+            <div class="post-item">
+              <div class="post-header">
+                <span class="post-author">{{ post.full_name or post.username }}</span>
+                <span class="post-date">{{ post.created_at[:10] if post.created_at else '' }}</span>
+              </div>
+              <div class="post-content">{{ post.content }}</div>
+              <div class="post-actions"><span class="post-likes">❤️ {{ post.likes or 0 }}</span></div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Нет постов</div><div class="empty-text">{{ user.full_name or user.username }} пока ничего не опубликовал</div></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-about">
+      <div class="info-group">
+        <div class="info-row"><span class="info-label">Имя</span><span class="info-value">{{ user.full_name or 'Не указано' }}</span></div>
+        <div class="info-row"><span class="info-label">Статус</span><span class="info-value">{{ user.status or 'Не установлен' }}</span></div>
+        <div class="info-row"><span class="info-label">О себе</span><span class="info-value">{{ user.bio or 'Не указано' }}</span></div>
+        <div class="info-row"><span class="info-label">В сети</span><span class="info-value">{{ 'Онлайн' if user.online else 'Не в сети' }}</span></div>
+        <div class="info-row"><span class="info-label">Регистрация</span><span class="info-value">{{ user.created_at[:10] if user.created_at else '—' }}</span></div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/js/user_profile.js"></script>
+</body>
+</html>
