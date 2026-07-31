@@ -588,3 +588,111 @@ function openChatOrCreate(chatId, username) {
     .catch(err => alert('Ошибка: ' + err));
   }
 }
+function connectSocket() {
+  socket = io();
+  socket.on('connect', () => console.log('✅ WebSocket подключен'));
+  socket.on('new_message', () => {
+    loadChats();
+  });
+}
+
+function loadChats() {
+  fetch('/api/chats')
+    .then(res => res.json())
+    .then(chats => {
+      const container = document.getElementById('chatList');
+      if (!chats || chats.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
+        return;
+      }
+      container.innerHTML = `
+        <div class="section-label">💬 Групповые чаты</div>
+        ${chats.filter(c => c.type === 'group').map(chat => `
+          <div class="chat-item" onclick="openChat(${chat.id})">
+            <div class="chat-avatar">👥</div>
+            <div class="chat-info">
+              <div class="chat-name">${chat.name || 'Групповой чат'}</div>
+              <div class="chat-preview">${chat.member_count || 0} участников</div>
+            </div>
+            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
+          </div>
+        `).join('')}
+      `;
+    })
+    .catch(err => console.error('Ошибка загрузки чатов:', err));
+}
+
+function openChat(chatId) {
+  window.location.href = `/chat/${chatId}`;
+}
+
+function createGroup() {
+  const name = prompt('Название группы:');
+  if (!name || !name.trim()) return;
+  const membersInput = prompt('Участники через запятую (минимум 2):');
+  if (!membersInput || !membersInput.trim()) return;
+  const members = membersInput.split(',').map(m => m.trim()).filter(m => m);
+  if (members.length < 2) {
+    alert('Нужно минимум 2 участника');
+    return;
+  }
+  fetch('/api/create_group', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim(), members: members })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.chat_id) {
+      loadChats();
+      openChat(data.chat_id);
+    } else {
+      alert(data.error || 'Ошибка создания группы');
+    }
+  })
+  .catch(err => console.error('Ошибка:', err));
+}
+
+const dockItems = document.querySelectorAll('.dock-item');
+const panels = {
+  'panel-feed': document.getElementById('panel-feed'),
+  'panel-chats': document.getElementById('panel-chats'),
+  'panel-communities': document.getElementById('panel-communities'),
+  'panel-profile': document.getElementById('panel-profile')
+};
+
+dockItems.forEach(item => {
+  item.addEventListener('click', function() {
+    dockItems.forEach(d => d.classList.remove('active'));
+    this.classList.add('active');
+    Object.values(panels).forEach(p => p.classList.remove('active'));
+    const panelId = this.dataset.panel;
+    if (panels[panelId]) {
+      panels[panelId].classList.add('active');
+    }
+  });
+});
+
+const splashShown = sessionStorage.getItem('splash_shown');
+if (splashShown) {
+  splash.style.display = 'none';
+  app.classList.add('app-visible');
+  initApp();
+} else {
+  const messages = ['Создаем пространство...', 'Настраиваем безопасность...', 'Почти готово...'];
+  let msgIndex = 0;
+  const msgInterval = setInterval(() => {
+    msgIndex++;
+    if (msgIndex < messages.length) {
+      splashMessage.textContent = messages[msgIndex];
+    } else {
+      clearInterval(msgInterval);
+      setTimeout(() => {
+        splash.classList.add('splash-hidden');
+        app.classList.add('app-visible');
+        sessionStorage.setItem('splash_shown', 'true');
+        initApp();
+      }, 600);
+    }
+  }, 1200);
+}
