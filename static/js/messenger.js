@@ -31,6 +31,7 @@ function initApp() {
     }
   });
 
+  // Закрываем поиск при клике вне
   document.addEventListener('click', function(e) {
     const results = document.getElementById('searchResults');
     if (results && !results.contains(e.target) && e.target.id !== 'searchUsers') {
@@ -449,7 +450,6 @@ function searchUsers(query) {
         </div>
       `).join('');
       resultsContainer.style.display = 'block';
-      // Скроллим к результатам плавно
       resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     })
     .catch(err => console.error('Ошибка поиска:', err));
