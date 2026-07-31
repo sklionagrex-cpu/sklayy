@@ -172,3 +172,199 @@ function leaveCommunity(communityId) {
   if (!confirm('Покинуть сообщество?')) return;
   alert('Функция в разработке');
 }
+function updateProfilePanel(user) {
+  currentUser = user;
+  document.getElementById('panelName').textContent = user.full_name || user.username;
+  document.getElementById('panelStatus').textContent = user.status || 'Статус не установлен';
+  document.getElementById('panelBio').textContent = user.bio || 'Добавьте информацию о себе';
+  document.getElementById('panelFullName').textContent = user.full_name || user.username;
+  document.getElementById('panelStatusFull').textContent = user.status || 'Не установлен';
+  document.getElementById('panelBioFull').textContent = user.bio || 'Не указано';
+  document.getElementById('panelCreatedAt').textContent = user.created_at ? user.created_at.slice(0,10) : '—';
+  updateAvatar(user.avatar);
+}
+
+function updateAvatar(url) {
+  const avatarEl = document.getElementById('panelAvatar');
+  if (url && url.startsWith('/static/uploads/')) {
+    avatarEl.innerHTML = `<img src="${url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    avatarEl.textContent = url || '👤';
+  }
+}
+
+function loadProfileData() {
+  fetch('/api/profile')
+    .then(res => res.json())
+    .then(user => {
+      updateProfilePanel(user);
+      loadPanelPosts();
+      loadFriends();
+      loadFriendRequests();
+      updateFriendRequestBadge();
+    })
+    .catch(err => console.error('Ошибка загрузки профиля:', err));
+}
+
+function updateFriendRequestBadge() {
+  fetch('/api/friend_requests')
+    .then(res => res.json())
+    .then(requests => {
+      const count = requests ? requests.length : 0;
+      const badge = document.getElementById('friendRequestBadge');
+      if (badge) {
+        if (count > 0) {
+          badge.textContent = count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    })
+    .catch(err => console.error('Ошибка обновления бейджа:', err));
+}
+
+function loadPanelPosts() {
+  fetch('/api/posts')
+    .then(res => res.json())
+    .then(posts => {
+      const container = document.getElementById('panelPostsList');
+      if (!posts || posts.length === 0) {
+        container.innerHTML = '<div class="empty-state">У вас пока нет постов</div>';
+        return;
+      }
+      container.innerHTML = posts.map(post => {
+        let mediaHtml = '';
+        if (post.media_url) {
+          if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
+            mediaHtml = `<div class="post-media"><video controls><source src="${post.media_url}" type="video/mp4"></video></div>`;
+          } else {
+            mediaHtml = `<div class="post-media"><img src="${post.media_url}" alt="Изображение"></div>`;
+          }
+        }
+        return `
+          <div class="post-item">
+            <div class="post-header">
+              <span class="post-author">${post.full_name || post.username}</span>
+              <span class="post-date">${post.created_at ? post.created_at.slice(0,10) : ''}</span>
+            </div>
+            <div class="post-content">${post.content}</div>
+            ${mediaHtml}
+            <div class="post-actions">
+              <button class="btn-sm like-btn" onclick="likePostInProfile(${post.id})">❤️ ${post.likes || 0}</button>
+              <button class="btn-sm delete-btn" onclick="deletePostInProfile(${post.id})">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error('Ошибка загрузки постов:', err));
+}
+
+function likePostInProfile(postId) {
+  fetch(`/api/posts/${postId}/like`, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => { if (data.success) loadPanelPosts(); })
+    .catch(err => console.error('Ошибка:', err));
+}
+
+function deletePostInProfile(postId) {
+  if (!confirm('Удалить пост?')) return;
+  fetch(`/api/posts/${postId}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => { if (data.success) loadPanelPosts(); })
+    .catch(err => console.error('Ошибка:', err));
+}
+
+function switchProfileSubTab(tab) {
+  document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.sub-tab[data-subtab="${tab}"]`).classList.add('active');
+  document.getElementById(`subtab-${tab}`).classList.add('active');
+  
+  if (tab === 'friends') {
+    loadFriends();
+    loadFriendRequests();
+    updateFriendRequestBadge();
+  }
+  if (tab === 'posts') {
+    loadPanelPosts();
+  }
+}
+
+function openPostModal() {
+  document.getElementById('postModal').style.display = 'flex';
+  document.getElementById('postContent').value = '';
+  document.getElementById('postContent').focus();
+  mediaUrl = null;
+  document.getElementById('mediaFileName').textContent = '';
+  document.getElementById('removeMediaBtn').style.display = 'none';
+  document.getElementById('mediaInput').value = '';
+}
+
+function closePostModal() {
+  document.getElementById('postModal').style.display = 'none';
+}
+
+function uploadMedia(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Неподдерживаемый формат');
+    input.value = '';
+    return;
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    alert('Файл слишком большой (макс. 50MB)');
+    input.value = '';
+    return;
+  }
+  const formData = new FormData();
+  formData.append('media', file);
+  fetch('/api/upload_media', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.url) {
+      mediaUrl = data.url;
+      document.getElementById('mediaFileName').textContent = file.name;
+      document.getElementById('removeMediaBtn').style.display = 'inline-block';
+    }
+  })
+  .catch(err => alert('Ошибка загрузки'));
+  input.value = '';
+}
+
+function removeMedia() {
+  mediaUrl = null;
+  document.getElementById('mediaFileName').textContent = '';
+  document.getElementById('removeMediaBtn').style.display = 'none';
+  document.getElementById('mediaInput').value = '';
+}
+
+function publishPost() {
+  const content = document.getElementById('postContent').value.trim();
+  if (!content && !mediaUrl) {
+    alert('Введите текст или прикрепите медиа');
+    return;
+  }
+  const data = { content: content };
+  if (mediaUrl) data.media_url = mediaUrl;
+  fetch('/api/posts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      closePostModal();
+      loadPanelPosts();
+      loadFeed();
+    }
+  })
+  .catch(err => console.error('Ошибка:', err));
+}
