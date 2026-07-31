@@ -175,30 +175,14 @@ def get_communities_for_user(user_id):
     conn.close()
     return communities
 
-def get_feed_posts(user_id):
-    # Посты друзей и из сообществ, в которых состоит пользователь
-    conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN communities c ON p.community_id = c.id
-        WHERE (p.user_id IN (SELECT friend_id FROM friends WHERE user_id = ? AND status = 'accepted')
-               OR p.user_id IN (SELECT user_id FROM friends WHERE friend_id = ? AND status = 'accepted')
-               OR p.community_id IN (SELECT community_id FROM community_members WHERE user_id = ?))
-        ORDER BY p.created_at DESC
-    ''', (user_id, user_id, user_id)).fetchall()
-    conn.close()
-    return posts
-
 # ===== МАРШРУТЫ =====
 @app.route('/')
+pi/feed)/,/^$/d
 def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+pi/feed)/,/^$/d
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -212,6 +196,7 @@ def login():
     return render_template('auth.html', mode='login')
 
 @app.route('/register', methods=['GET', 'POST'])
+pi/feed)/,/^$/d
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -232,12 +217,14 @@ def register():
     return render_template('auth.html', mode='register')
 
 @app.route('/app')
+pi/feed)/,/^$/d
 def messenger():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('messenger.html', username=session.get('username'))
 
 @app.route('/profile')
+pi/feed)/,/^$/d
 def profile_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -247,6 +234,7 @@ def profile_page():
     return render_template('profile.html', user=user)
 
 @app.route('/user/<username>')
+pi/feed)/,/^$/d
 def user_profile(username):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -278,6 +266,7 @@ def user_profile(username):
     return render_template('user_profile.html', user=user, posts=posts, current_user=session.get('username'), is_friend=is_friend)
 
 @app.route('/chat/<int:chat_id>')
+pi/feed)/,/^$/d
 def chat_view(chat_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -292,12 +281,14 @@ def chat_view(chat_id):
     return render_template('chat.html', chat=chat, members=members, username=session.get('username'))
 
 @app.route('/logout')
+pi/feed)/,/^$/d
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
 # ===== API =====
 @app.route('/api/profile')
+pi/feed)/,/^$/d
 def get_profile():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -307,6 +298,7 @@ def get_profile():
     return jsonify(dict(user))
 
 @app.route('/api/profile', methods=['PUT'])
+pi/feed)/,/^$/d
 def update_profile():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -320,6 +312,7 @@ def update_profile():
     return jsonify({'success': True})
 
 @app.route('/api/profile/settings', methods=['PUT'])
+pi/feed)/,/^$/d
 def update_settings():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -338,6 +331,7 @@ def update_settings():
     return jsonify({'success': True})
 
 @app.route('/api/upload_avatar', methods=['POST'])
+pi/feed)/,/^$/d
 def upload_avatar():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -358,6 +352,7 @@ def upload_avatar():
     return jsonify({'url': url})
 
 @app.route('/api/upload_media', methods=['POST'])
+pi/feed)/,/^$/d
 def upload_media():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -379,6 +374,7 @@ def upload_media():
     return jsonify({'url': url})
 
 @app.route('/api/chats')
+pi/feed)/,/^$/d
 def get_chats():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -393,6 +389,7 @@ def get_chats():
     return jsonify([dict(chat) for chat in chats])
 
 @app.route('/api/messages/<int:chat_id>')
+pi/feed)/,/^$/d
 def get_messages(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -407,6 +404,7 @@ def get_messages(chat_id):
     return jsonify([dict(m) for m in msgs])
 
 @app.route('/api/create_chat', methods=['POST'])
+pi/feed)/,/^$/d
 def create_chat():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -437,6 +435,7 @@ def create_chat():
     return jsonify({'chat_id': chat_id})
 
 @app.route('/api/create_group', methods=['POST'])
+pi/feed)/,/^$/d
 def create_group():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -461,6 +460,7 @@ def create_group():
     return jsonify({'chat_id': chat_id})
 
 @app.route('/api/messages/<int:chat_id>/<int:message_id>', methods=['PUT'])
+pi/feed)/,/^$/d
 def edit_message(chat_id, message_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -481,6 +481,7 @@ def edit_message(chat_id, message_id):
     return jsonify({'success': True})
 
 @app.route('/api/messages/<int:chat_id>', methods=['DELETE'])
+pi/feed)/,/^$/d
 def delete_message(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -498,6 +499,7 @@ def delete_message(chat_id):
     return jsonify({'success': True})
 
 @app.route('/api/search_messages/<int:chat_id>')
+pi/feed)/,/^$/d
 def search_messages(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -516,6 +518,7 @@ def search_messages(chat_id):
 
 # ===== ДРУЗЬЯ =====
 @app.route('/api/friends')
+pi/feed)/,/^$/d
 def get_friends():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -523,6 +526,7 @@ def get_friends():
     return jsonify([dict(f) for f in friends])
 
 @app.route('/api/friend_requests')
+pi/feed)/,/^$/d
 def get_friend_requests():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -536,6 +540,7 @@ def get_friend_requests():
     return jsonify([dict(r) for r in reqs])
 
 @app.route('/api/friends', methods=['POST'])
+pi/feed)/,/^$/d
 def send_friend_request():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -560,6 +565,7 @@ def send_friend_request():
     return jsonify({'success': True})
 
 @app.route('/api/friends/<int:request_id>', methods=['PUT'])
+pi/feed)/,/^$/d
 def accept_friend(request_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -575,6 +581,7 @@ def accept_friend(request_id):
     return jsonify({'success': True})
 
 @app.route('/api/friends/<int:request_id>', methods=['DELETE'])
+pi/feed)/,/^$/d
 def reject_friend(request_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -586,6 +593,7 @@ def reject_friend(request_id):
     return jsonify({'success': True})
 
 @app.route('/api/blocked')
+pi/feed)/,/^$/d
 def get_blocked():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -599,6 +607,7 @@ def get_blocked():
     return jsonify([dict(b) for b in blocked])
 
 @app.route('/api/block/<int:user_id>', methods=['POST'])
+pi/feed)/,/^$/d
 def block_user(user_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -617,6 +626,7 @@ def block_user(user_id):
     return jsonify({'success': True})
 
 @app.route('/api/unblock/<int:user_id>', methods=['DELETE'])
+pi/feed)/,/^$/d
 def unblock_user(user_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -628,6 +638,7 @@ def unblock_user(user_id):
     return jsonify({'success': True})
 
 @app.route('/api/delete_account', methods=['POST'])
+pi/feed)/,/^$/d
 def delete_account():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -650,6 +661,7 @@ def delete_account():
 
 # ===== ПОСТЫ =====
 @app.route('/api/posts')
+pi/feed)/,/^$/d
 def get_posts():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -668,6 +680,7 @@ def get_posts():
     return jsonify([dict(post) for post in posts])
 
 @app.route('/api/posts', methods=['POST'])
+pi/feed)/,/^$/d
 def create_post():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -687,6 +700,7 @@ def create_post():
     return jsonify({'success': True})
 
 @app.route('/api/posts/<int:post_id>/like', methods=['POST'])
+pi/feed)/,/^$/d
 def like_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -710,6 +724,7 @@ def like_post(post_id):
     return jsonify({'success': True})
 
 @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
+pi/feed)/,/^$/d
 def delete_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -728,15 +743,9 @@ def delete_post(post_id):
     return jsonify({'success': True})
 
 # ===== ЛЕНТА =====
-@app.route('/api/feed')
-def get_feed():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    posts = get_feed_posts(session['user_id'])
-    return jsonify([dict(p) for p in posts])
-
 # ===== СООБЩЕСТВА =====
 @app.route('/api/communities')
+pi/feed)/,/^$/d
 def get_communities():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -752,6 +761,7 @@ def get_communities():
     })
 
 @app.route('/api/communities', methods=['POST'])
+pi/feed)/,/^$/d
 def create_community():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -777,6 +787,7 @@ def create_community():
     return jsonify({'community_id': community_id})
 
 @app.route('/api/communities/<int:community_id>/join', methods=['POST'])
+pi/feed)/,/^$/d
 def join_community(community_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -829,3 +840,32 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+# ===== ЛЕНТА =====
+def get_feed_posts(user_id):
+    conn = get_db()
+    posts = conn.execute('''
+        SELECT p.*, u.username, u.full_name, u.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
+               c.name as community_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        WHERE (
+            p.user_id = ?
+            OR p.user_id IN (SELECT friend_id FROM friends WHERE user_id = ? AND status = 'accepted')
+            OR p.user_id IN (SELECT user_id FROM friends WHERE friend_id = ? AND status = 'accepted')
+            OR p.community_id IN (SELECT community_id FROM community_members WHERE user_id = ?)
+        )
+        ORDER BY p.created_at DESC
+    ''', (user_id, user_id, user_id, user_id))
+    result = posts.fetchall()
+    conn.close()
+    return result
+
+@app.route('/api/feed')
+def get_feed():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    posts = get_feed_posts(session['user_id'])
+    return jsonify([dict(p) for p in posts])
