@@ -12,6 +12,19 @@ function initApp() {
   loadFeed();
   loadCommunities();
 
+  // Проверяем параметр URL для обновления ленты
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('feed') === 'updated') {
+    setTimeout(() => {
+      loadFeed();
+      // Удаляем параметр из URL
+      if (window.history && window.history.replaceState) {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }, 500);
+  }
+
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'profile_updated') {
       const user = event.data.user;
@@ -32,7 +45,6 @@ function initApp() {
   });
   observer.observe(profilePanel, { attributes: true, attributeFilter: ['class'] });
 
-  // При переключении на ленту обновляем
   const feedPanel = document.getElementById('panel-feed');
   const feedObserver = new MutationObserver(() => {
     if (feedPanel.classList.contains('active')) {
@@ -71,7 +83,7 @@ function loadFeed() {
             <div class="feed-content">${post.content}</div>
             ${mediaHtml}
             <div class="feed-actions">
-              <button class="btn-sm" onclick="likePost(${post.id})">❤️ ${post.likes || 0}</button>
+              <button class="btn-sm" onclick="likePostFeed(${post.id})">❤️ ${post.likes || 0}</button>
             </div>
           </div>
         `;
@@ -80,7 +92,7 @@ function loadFeed() {
     .catch(err => console.error('Ошибка загрузки ленты:', err));
 }
 
-function likePost(postId) {
+function likePostFeed(postId) {
   fetch(`/api/posts/${postId}/like`, { method: 'POST' })
     .then(res => res.json())
     .then(data => {
@@ -95,7 +107,6 @@ function loadCommunities() {
   fetch('/api/communities')
     .then(res => res.json())
     .then(data => {
-      // Мои сообщества
       const myContainer = document.getElementById('myCommunitiesList');
       if (!data.my || data.my.length === 0) {
         myContainer.innerHTML = '<div class="empty-state">Вы не состоите в сообществах</div>';
@@ -111,7 +122,6 @@ function loadCommunities() {
           </div>
         `).join('');
       }
-      // Все сообщества (для вступления)
       const allContainer = document.getElementById('allCommunitiesList');
       if (!data.all || data.all.length === 0) {
         allContainer.innerHTML = '<div class="empty-state">Нет доступных сообществ</div>';
@@ -148,6 +158,7 @@ function createCommunity() {
     if (data.community_id) {
       alert('Сообщество создано!');
       loadCommunities();
+      loadFeed();
     } else {
       alert('Ошибка создания');
     }
@@ -172,7 +183,6 @@ function joinCommunity(communityId) {
 
 function leaveCommunity(communityId) {
   if (!confirm('Покинуть сообщество?')) return;
-  // Пока нет API для выхода, просто обновим
   alert('Функция в разработке');
 }
 
@@ -259,7 +269,6 @@ function connectSocket() {
   socket.on('connect', () => console.log('✅ WebSocket подключен'));
   socket.on('new_message', () => {
     loadChats();
-    // также обновляем ленту если нужно (сообщения не влияют на ленту)
   });
 }
 
@@ -405,4 +414,5 @@ if (splashShown) {
     }
   }, 1200);
 }
+
 console.log('🚀 Sklay мессенджер загружен!');

@@ -217,10 +217,8 @@ function publishPost() {
     if (data.success) {
       showToast('✅ Пост опубликован!');
       closePostModal();
-      loadPosts();
-      if (window.opener) {
-        window.opener.postMessage({ type: 'profile_updated', user: currentUser }, '*');
-      }
+      // Перенаправляем в мессенджер с параметром обновления ленты
+      window.location.href = '/app?feed=updated';
     } else {
       showToast('❌ ' + (data.error || 'Ошибка'));
     }
