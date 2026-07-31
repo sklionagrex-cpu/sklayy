@@ -194,6 +194,7 @@ function updateAvatar(url) {
 }
 
 function loadProfileData() {
+  loadInfo();
   fetch('/api/profile')
     .then(res => res.json())
     .then(user => {
@@ -277,6 +278,7 @@ function deletePostInProfile(postId) {
 }
 
 function switchProfileSubTab(tab) {
+  if (tab === "info") { loadInfo(); }
   document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
   document.querySelector(`.sub-tab[data-subtab="${tab}"]`).classList.add('active');
@@ -695,4 +697,15 @@ if (splashShown) {
       }, 600);
     }
   }, 1200);
+}
+function loadInfo() {
+  fetch('/api/profile')
+    .then(res => res.json())
+    .then(user => {
+      document.getElementById('panelFullName').textContent = user.full_name || user.username;
+      document.getElementById('panelStatusFull').textContent = user.status || 'Не установлен';
+      document.getElementById('panelBioFull').textContent = user.bio || 'Не указано';
+      document.getElementById('panelCreatedAt').textContent = user.created_at ? user.created_at.slice(0,10) : '—';
+    })
+    .catch(err => console.error('Ошибка загрузки информации:', err));
 }
