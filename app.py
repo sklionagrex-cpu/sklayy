@@ -4,19 +4,51 @@ import sqlite3
 import hashlib
 from datetime import datetime
 import os
+import shutil
 
 app = Flask(__name__)
 app.secret_key = 'sklay_secret'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ===== БАЗА ДАННЫХ =====
-# Если на Render есть диск /data — используем его
-if os.path.exists('/data'):
-    DB_PATH = '/data/sklay.db'
-else:
-    DB_PATH = 'sklay.db'
+# ===== БЭКАП БАЗЫ ДАННЫХ =====
+DB_PATH = 'sklay.db'
+BACKUP_DIR = 'backups'
 
+def ensure_backup_dir():
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+
+def backup_db():
+    ensure_backup_dir()
+    if os.path.exists(DB_PATH):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = os.path.join(BACKUP_DIR, f"sklay_backup_{timestamp}.db")
+        shutil.copy2(DB_PATH, backup_path)
+        # Оставляем только последние 10 бэкапов
+        backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')])
+        if len(backups) > 10:
+            for f in backups[:-10]:
+                os.remove(os.path.join(BACKUP_DIR, f))
+        return True
+    return False
+
+def restore_last_backup():
+    ensure_backup_dir()
+    backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')], reverse=True)
+    if backups:
+        latest = os.path.join(BACKUP_DIR, backups[0])
+        shutil.copy2(latest, DB_PATH)
+        return True
+    return False
+
+# Восстанавливаем базу если её нет
+if not os.path.exists(DB_PATH):
+    if not restore_last_backup():
+        # Если бэкапа нет — создадим новую базу
+        pass
+
+# ===== БАЗА ДАННЫХ =====
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -141,15 +173,6 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS community_admins (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            community_id INTEGER,
-            user_id INTEGER,
-            FOREIGN KEY (community_id) REFERENCES communities (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
     try:
         conn.execute('ALTER TABLE posts ADD COLUMN community_id INTEGER')
     except:
@@ -162,6 +185,9 @@ def init_db():
     conn.close()
 
 init_db()
+
+# Создаём бэкап после инициализации
+backup_db()
 
 # ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 def get_user_by_username(username):
@@ -195,7 +221,7 @@ def get_feed_posts(user_id):
 def is_community_admin(community_id, user_id):
     conn = get_db()
     admin = conn.execute('''
-        SELECT * FROM community_admins WHERE community_id = ? AND user_id = ?
+        SELECT * FROM community_members WHERE community_id = ? AND user_id = ? AND role = 'admin'
     ''', (community_id, user_id)).fetchone()
     conn.close()
     return admin is not None
@@ -790,7 +816,6 @@ def leave_community(community_id):
 def make_admin(community_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
-    # Проверяем, что текущий пользователь — админ
     if not is_community_admin(community_id, session['user_id']):
         return jsonify({'error': 'Not an admin'}), 403
     data = request.json
@@ -798,7 +823,6 @@ def make_admin(community_id):
     if not user_id:
         return jsonify({'error': 'User ID required'}), 400
     conn = get_db()
-    # Проверяем, что пользователь состоит в сообществе
     member = conn.execute(
         'SELECT * FROM community_members WHERE community_id = ? AND user_id = ?',
         (community_id, user_id)
@@ -869,7 +893,3 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
-
-# ===== АВТОМАТИЧЕСКИЙ БЭКАП ПРИ ЗАПУСКЕ =====
-import subprocess
-subprocess.run(['python', 'backup_restore.py'], capture_output=True)
