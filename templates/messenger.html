@@ -12,17 +12,15 @@
 <body>
   <div id="splash" class="splash-active">
     <div class="splash-logo">◈ Sklay</div>
-    <div class="splash-message" id="splashMessage">Создаем ваше пространство...</div>
+    <div class="splash-message" id="splashMessage">Загружаем...</div>
   </div>
 
   <div id="app" class="app-hidden">
     <div class="panels-container">
-      <!-- ЛЕНТА -->
+      <!-- ЛЕНТА (новый дизайн) -->
       <div class="panel panel-feed active" id="panel-feed">
         <div class="panel-header"><h2>Лента</h2></div>
-        <div class="panel-content" id="feedList">
-          <div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Подписывайтесь на друзей и вступайте в сообщества</div></div>
-        </div>
+        <div class="panel-content" id="feedList"></div>
       </div>
 
       <!-- ЧАТЫ -->
@@ -49,13 +47,9 @@
         <div class="panel-content">
           <div class="communities-section">
             <h3>Мои сообщества</h3>
-            <div id="myCommunitiesList" class="communities-list">
-              <div class="empty-state">Вы не состоите в сообществах</div>
-            </div>
+            <div id="myCommunitiesList" class="communities-list"></div>
             <h3 style="margin-top:20px;">Все сообщества</h3>
-            <div id="allCommunitiesList" class="communities-list">
-              <div class="empty-state">Нет доступных сообществ</div>
-            </div>
+            <div id="allCommunitiesList" class="communities-list"></div>
           </div>
         </div>
       </div>
@@ -64,25 +58,17 @@
       <div class="panel panel-profile" id="panel-profile">
         <div class="panel-header">
           <h2>Мой аккаунт</h2>
-          <a href="/profile" class="icon-link" title="Редактировать профиль">
-            <i class="fas fa-pen"></i>
-          </a>
+          <a href="/profile" class="icon-link" title="Редактировать профиль"><i class="fas fa-pen"></i></a>
         </div>
         <div class="panel-content profile-content">
           <div class="profile-avatar" id="panelAvatar">👤</div>
           <div class="profile-name" id="panelName">{{ username }}</div>
           <div class="profile-status" id="panelStatus" style="color:#888;">Статус не установлен</div>
           <div class="profile-bio" id="panelBio" style="color:#666;font-size:14px;">Добавьте информацию о себе</div>
-
           <div class="profile-sub-tabs">
-            <button class="sub-tab active" data-subtab="info" onclick="switchProfileSubTab('info')">
-              <i class="fas fa-user"></i> Информация
-            </button>
-            <button class="sub-tab" data-subtab="posts" onclick="switchProfileSubTab('posts')">
-              <i class="fas fa-newspaper"></i> Посты
-            </button>
+            <button class="sub-tab active" data-subtab="info" onclick="switchProfileSubTab('info')"><i class="fas fa-user"></i> Информация</button>
+            <button class="sub-tab" data-subtab="posts" onclick="switchProfileSubTab('posts')"><i class="fas fa-newspaper"></i> Посты</button>
           </div>
-
           <div class="sub-tab-content active" id="subtab-info">
             <div class="info-group">
               <div class="info-row"><span class="info-label">👤 Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
@@ -91,11 +77,8 @@
               <div class="info-row"><span class="info-label">📅 Регистрация</span><span class="info-value" id="panelCreatedAt">—</span></div>
             </div>
           </div>
-
           <div class="sub-tab-content" id="subtab-posts">
-            <div id="panelPostsList" class="posts-list">
-              <div class="empty-state">У вас пока нет постов</div>
-            </div>
+            <div id="panelPostsList" class="posts-list"><div class="empty-state">У вас пока нет постов</div></div>
           </div>
         </div>
       </div>
