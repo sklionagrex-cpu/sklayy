@@ -1,40 +1,30 @@
-// Заставка
 const splash = document.getElementById('splash');
 const splashMessage = document.getElementById('splashMessage');
 const app = document.getElementById('app');
 
 let socket = null;
+let currentUser = {};
 
 function initApp() {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("feed") === "updated") {
-    setTimeout(() => {
-      loadFeed();
-      if (window.history && window.history.replaceState) {
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-      }
-    }, 500);
-  }
+  console.log('🚀 Инициализация мессенджера');
   connectSocket();
   loadChats();
   loadProfileData();
   loadFeed();
   loadCommunities();
 
-  // Проверяем параметр URL для обновления ленты
+  // Проверяем параметр feed=updated
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('feed') === 'updated') {
     setTimeout(() => {
       loadFeed();
-      // Удаляем параметр из URL
       if (window.history && window.history.replaceState) {
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     }, 500);
   }
 
+  // Обновление профиля через postMessage
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'profile_updated') {
       const user = event.data.user;
@@ -47,14 +37,7 @@ function initApp() {
     }
   });
 
-  const profilePanel = document.getElementById('panel-profile');
-  const observer = new MutationObserver(() => {
-    if (profilePanel.classList.contains('active')) {
-      loadPanelPosts();
-    }
-  });
-  observer.observe(profilePanel, { attributes: true, attributeFilter: ['class'] });
-
+  // Обновление ленты при переходе на панель
   const feedPanel = document.getElementById('panel-feed');
   const feedObserver = new MutationObserver(() => {
     if (feedPanel.classList.contains('active')) {
@@ -65,12 +48,14 @@ function initApp() {
 }
 
 function loadFeed() {
+  console.log('📡 Загрузка ленты...');
   fetch('/api/feed')
     .then(res => res.json())
     .then(posts => {
       const container = document.getElementById('feedList');
+      if (!container) return;
       if (!posts || posts.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Подписывайтесь на друзей и вступайте в сообщества</div></div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Создайте первый пост или вступите в сообщество</div></div>';
         return;
       }
       container.innerHTML = posts.map(post => {
@@ -82,18 +67,21 @@ function loadFeed() {
             mediaHtml = `<img src="${post.media_url}" style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;" alt="Изображение">`;
           }
         }
-        const communityLabel = post.community_name ? `<span class="community-label">в сообществе «${post.community_name}»</span>` : '';
         return `
           <div class="feed-item">
             <div class="feed-header">
-              <span class="feed-author">${post.full_name || post.username}</span>
-              ${communityLabel}
-              <span class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ''}</span>
+              <div class="feed-avatar">${post.avatar || '👤'}</div>
+              <div class="feed-author-info">
+                <div class="feed-author-name">${post.full_name || post.username}</div>
+                <div class="feed-author-username">@${post.username}</div>
+              </div>
+              <div class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
             </div>
             <div class="feed-content">${post.content}</div>
             ${mediaHtml}
             <div class="feed-actions">
-              <button class="btn-sm" onclick="likePostFeed(${post.id})">❤️ ${post.likes || 0}</button>
+              <button onclick="likePostFeed(${post.id})">❤️ ${post.likes || 0}</button>
+              <button onclick="window.location.href='/post/${post.id}'">💬</button>
             </div>
           </div>
         `;
@@ -106,9 +94,7 @@ function likePostFeed(postId) {
   fetch(`/api/posts/${postId}/like`, { method: 'POST' })
     .then(res => res.json())
     .then(data => {
-      if (data.success) {
-        loadFeed();
-      }
+      if (data.success) loadFeed();
     })
     .catch(err => console.error('Ошибка:', err));
 }
@@ -196,18 +182,15 @@ function leaveCommunity(communityId) {
   alert('Функция в разработке');
 }
 
-// ===== ПРОФИЛЬ (панель) =====
 function updateProfilePanel(user) {
   currentUser = user;
   document.getElementById('panelName').textContent = user.full_name || user.username;
   document.getElementById('panelStatus').textContent = user.status || 'Статус не установлен';
   document.getElementById('panelBio').textContent = user.bio || 'Добавьте информацию о себе';
-  
   document.getElementById('panelFullName').textContent = user.full_name || user.username;
   document.getElementById('panelStatusFull').textContent = user.status || 'Не установлен';
   document.getElementById('panelBioFull').textContent = user.bio || 'Не указано';
   document.getElementById('panelCreatedAt').textContent = user.created_at ? user.created_at.slice(0,10) : '—';
-  
   updateAvatar(user.avatar);
 }
 
@@ -273,7 +256,6 @@ function switchProfileSubTab(tab) {
   document.getElementById(`subtab-${tab}`).classList.add('active');
 }
 
-// ===== ЧАТЫ =====
 function connectSocket() {
   socket = io();
   socket.on('connect', () => console.log('✅ WebSocket подключен'));
@@ -310,7 +292,7 @@ function openChat(chatId) {
 }
 
 function createChat() {
-  const username = prompt('Введите имя пользователя для начала чата:');
+  const username = prompt('Введите имя пользователя:');
   if (username && username.trim()) {
     fetch('/api/create_chat', {
       method: 'POST',
@@ -331,9 +313,9 @@ function createChat() {
 }
 
 function createGroup() {
-  const name = prompt('Введите название группы:');
+  const name = prompt('Название группы:');
   if (!name || !name.trim()) return;
-  const membersInput = prompt('Введите имена участников через запятую (минимум 2):');
+  const membersInput = prompt('Участники через запятую (минимум 2):');
   if (!membersInput || !membersInput.trim()) return;
   const members = membersInput.split(',').map(m => m.trim()).filter(m => m);
   if (members.length < 2) {
@@ -357,7 +339,6 @@ function createGroup() {
   .catch(err => console.error('Ошибка:', err));
 }
 
-// ===== НАВИГАЦИЯ (DOCK) =====
 const dockItems = document.querySelectorAll('.dock-item');
 const panels = {
   'panel-feed': document.getElementById('panel-feed'),
@@ -384,19 +365,8 @@ if (splashShown) {
   splash.style.display = 'none';
   app.classList.add('app-visible');
   initApp();
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('tab') === 'profile') {
-    setTimeout(() => {
-      const profileDock = document.querySelector('.dock-item[data-panel="panel-profile"]');
-      if (profileDock) profileDock.click();
-    }, 200);
-  }
-  if (window.history && window.history.replaceState) {
-    const newUrl = window.location.pathname;
-    window.history.replaceState({}, document.title, newUrl);
-  }
 } else {
-  const messages = ['Создаем ваше пространство...', 'Настраиваем безопасность...', 'Почти готово...'];
+  const messages = ['Создаем пространство...', 'Настраиваем безопасность...', 'Почти готово...'];
   let msgIndex = 0;
   const msgInterval = setInterval(() => {
     msgIndex++;
@@ -409,17 +379,6 @@ if (splashShown) {
         app.classList.add('app-visible');
         sessionStorage.setItem('splash_shown', 'true');
         initApp();
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('tab') === 'profile') {
-          setTimeout(() => {
-            const profileDock = document.querySelector('.dock-item[data-panel="panel-profile"]');
-            if (profileDock) profileDock.click();
-          }, 200);
-        }
-        if (window.history && window.history.replaceState) {
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-        }
       }, 600);
     }
   }, 1200);

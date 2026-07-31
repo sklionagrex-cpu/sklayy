@@ -12,18 +12,18 @@
 <body>
   <div id="splash" class="splash-active">
     <div class="splash-logo">◈ Sklay</div>
-    <div class="splash-message" id="splashMessage">Загружаем...</div>
+    <div class="splash-message" id="splashMessage">Загрузка...</div>
   </div>
 
   <div id="app" class="app-hidden">
     <div class="panels-container">
-      <!-- ЛЕНТА (новый дизайн) -->
       <div class="panel panel-feed active" id="panel-feed">
         <div class="panel-header"><h2>Лента</h2></div>
-        <div class="panel-content" id="feedList"></div>
+        <div class="panel-content" id="feedList">
+          <div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Здесь будут посты</div></div>
+        </div>
       </div>
 
-      <!-- ЧАТЫ -->
       <div class="panel panel-chats" id="panel-chats">
         <div class="panel-header">
           <h2>Чаты</h2>
@@ -34,8 +34,62 @@
           </div>
         </div>
         <div class="panel-content" id="chatList">
-          <div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение — напишите кому-нибудь первым</div></div>
+          <div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>
         </div>
       </div>
 
-      <!-- СООБЩЕСТВА -->
+      <div class="panel panel-communities" id="panel-communities">
+        <div class="panel-header">
+          <h2>Сообщества</h2>
+          <button class="btn-icon" onclick="createCommunity()" title="Создать сообщество"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="panel-content">
+          <div class="communities-section">
+            <h3>Мои сообщества</h3>
+            <div id="myCommunitiesList" class="communities-list"></div>
+            <h3 style="margin-top:20px;">Все сообщества</h3>
+            <div id="allCommunitiesList" class="communities-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-profile" id="panel-profile">
+        <div class="panel-header">
+          <h2>Мой аккаунт</h2>
+          <a href="/profile" class="icon-link" title="Редактировать профиль"><i class="fas fa-pen"></i></a>
+        </div>
+        <div class="panel-content profile-content">
+          <div class="profile-avatar" id="panelAvatar">👤</div>
+          <div class="profile-name" id="panelName">{{ username }}</div>
+          <div class="profile-status" id="panelStatus" style="color:#888;">Статус не установлен</div>
+          <div class="profile-bio" id="panelBio" style="color:#666;font-size:14px;">Добавьте информацию о себе</div>
+          <div class="profile-sub-tabs">
+            <button class="sub-tab active" data-subtab="info" onclick="switchProfileSubTab('info')"><i class="fas fa-user"></i> Информация</button>
+            <button class="sub-tab" data-subtab="posts" onclick="switchProfileSubTab('posts')"><i class="fas fa-newspaper"></i> Посты</button>
+          </div>
+          <div class="sub-tab-content active" id="subtab-info">
+            <div class="info-group">
+              <div class="info-row"><span class="info-label">👤 Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
+              <div class="info-row"><span class="info-label">💬 Статус</span><span class="info-value" id="panelStatusFull">Не установлен</span></div>
+              <div class="info-row"><span class="info-label">📝 О себе</span><span class="info-value" id="panelBioFull">Не указано</span></div>
+              <div class="info-row"><span class="info-label">📅 Регистрация</span><span class="info-value" id="panelCreatedAt">—</span></div>
+            </div>
+          </div>
+          <div class="sub-tab-content" id="subtab-posts">
+            <div id="panelPostsList" class="posts-list"><div class="empty-state">У вас пока нет постов</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dock">
+      <div class="dock-item active" data-panel="panel-feed"><i class="fas fa-home"></i><span>Лента</span></div>
+      <div class="dock-item" data-panel="panel-chats"><i class="fas fa-comment-dots"></i><span>Чаты</span></div>
+      <div class="dock-item" data-panel="panel-communities"><i class="fas fa-users"></i><span>Сообщества</span></div>
+      <div class="dock-item" data-panel="panel-profile"><i class="fas fa-user"></i><span>Профиль</span></div>
+    </div>
+  </div>
+
+  <script src="/static/js/messenger.js"></script>
+</body>
+</html>
