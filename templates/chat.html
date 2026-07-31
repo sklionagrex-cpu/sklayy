@@ -1,13 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Sklay — Чат</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чат</title>
+  <link rel="stylesheet" href="/static/css/chat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
-    <h1>Чат</h1>
-    <p>Чат ID: {{ chat.id }}</p>
-    <p>Название: {{ chat.name or 'Без названия' }}</p>
-    <p>Участников: {{ members|length }}</p>
-    <a href="/app">Назад</a>
+  <div class="chat-container">
+    <div class="chat-header">
+      <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="chat-info">
+        <div class="chat-title">{{ chat.name or 'Чат' }}</div>
+        <div class="chat-members">{{ members|length }} участников</div>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages" data-chat-id="{{ chat.id }}">
+      <div class="messages-container" id="messagesContainer">
+        <div class="empty-chat">
+          <div class="empty-icon">💬</div>
+          <div class="empty-text">Нет сообщений</div>
+          <div class="empty-sub">Напишите первое сообщение</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-container">
+        <textarea id="messageInput" placeholder="Сообщение..." rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+        <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chatId = {{ chat.id }};
+    const currentUserId = {{ session['user_id'] }};
+    let socket = null;
+
+    function connectSocket() {
+      socket = io();
+      socket.on('connect', () => {
+        console.log('WebSocket подключен');
+        socket.emit('join_chat', { chat_id: chatId });
+      });
+      socket.on('new_message', (data) => {
+        if (data.chat_id == chatId) addMessage(data);
+      });
+    }
+
+    function loadMessages() {
+      fetch(`/api/messages/${chatId}`)
+        .then(res => res.json())
+        .then(messages => {
+          const container = document.getElementById('messagesContainer');
+          if (!messages || messages.length === 0) {
+            container.innerHTML = `<div class="empty-chat"><div class="empty-icon">💬</div><div class="empty-text">Нет сообщений</div><div class="empty-sub">Напишите первое сообщение</div></div>`;
+            return;
+          }
+          container.innerHTML = messages.map(msg => {
+            const isMine = msg.user_id == currentUserId;
+            return `
+              <div class="message ${isMine ? 'mine' : 'other'}">
+                ${!isMine ? `<div class="message-avatar">${msg.avatar || '👤'}</div>` : ''}
+                <div class="message-content">
+                  ${!isMine ? `<div class="message-sender">${msg.full_name || msg.username}</div>` : ''}
+                  <div class="message-text">${msg.content}</div>
+                  <div class="message-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          scrollToBottom();
+        })
+        .catch(err => console.error('Ошибка загрузки сообщений:', err));
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const content = input.value.trim();
+      if (!content) return;
+      socket.emit('send_message', { chat_id: chatId, content: content });
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    function addMessage(msg) {
+      const container = document.getElementById('messagesContainer');
+      const empty = container.querySelector('.empty-chat');
+      if (empty) container.innerHTML = '';
+      const isMine = msg.user_id == currentUserId;
+      container.insertAdjacentHTML('beforeend', `
+        <div class="message ${isMine ? 'mine' : 'other'}">
+          ${!isMine ? `<div class="message-avatar">${msg.avatar || '👤'}</div>` : ''}
+          <div class="message-content">
+            ${!isMine ? `<div class="message-sender">${msg.full_name || msg.username}</div>` : ''}
+            <div class="message-text">${msg.content}</div>
+            <div class="message-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+          </div>
+        </div>
+      `);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('chatMessages');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    document.getElementById('messageInput').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+
+    connectSocket();
+    loadMessages();
+  </script>
 </body>
 </html>
