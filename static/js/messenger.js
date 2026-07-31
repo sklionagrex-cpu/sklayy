@@ -9,6 +9,7 @@ function initApp() {
   console.log('🚀 Инициализация мессенджера');
   connectSocket();
   loadChats();
+  loadFriendsChats();
   loadProfileData();
   loadFeed();
   loadCommunities();
@@ -44,22 +45,73 @@ function initApp() {
   feedObserver.observe(feedPanel, { attributes: true, attributeFilter: ['class'] });
 }
 
+function loadFriendsChats() {
+  fetch('/api/friends_with_chat')
+    .then(res => res.json())
+    .then(friends => {
+      const container = document.getElementById('friendsChatList');
+      if (!friends || friends.length === 0) {
+        container.innerHTML = '<div class="empty-state">Нет друзей для чата</div>';
+        return;
+      }
+      container.innerHTML = `
+        <div class="section-label">👥 Друзья</div>
+        ${friends.map(f => {
+          const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
+            ? `<img src="${f.avatar}" alt="Avatar">`
+            : (f.avatar || '👤');
+          return `
+            <div class="chat-item" onclick="openChatOrCreate(${f.chat_id}, '${f.username}')">
+              <div class="chat-avatar">${avatarHtml}</div>
+              <div class="chat-info">
+                <div class="chat-name">${f.full_name || f.username}</div>
+                <div class="chat-preview">${f.online ? '🟢 Онлайн' : '⚪ Не в сети'}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    })
+    .catch(err => console.error('Ошибка загрузки друзей:', err));
+}
+
+function openChatOrCreate(chatId, username) {
+  if (chatId) {
+    window.location.href = `/chat/${chatId}`;
+  } else {
+    fetch('/api/create_chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.chat_id) {
+        window.location.href = `/chat/${data.chat_id}`;
+      } else {
+        alert('Ошибка создания чата');
+      }
+    })
+    .catch(err => alert('Ошибка: ' + err));
+  }
+}
+
 function loadFeed() {
-  console.log("📡 Загрузка ленты...");
-  fetch("/api/feed")
+  console.log('📡 Загрузка ленты...');
+  fetch('/api/feed')
     .then(res => res.json())
     .then(posts => {
-      const container = document.getElementById("feedList");
+      const container = document.getElementById('feedList');
       if (!container) return;
       if (!posts || posts.length === 0) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Создайте первый пост</div></div>';
         return;
       }
       container.innerHTML = posts.map(post => {
-        const avatarHtml = post.avatar && post.avatar.startsWith("/static/uploads/")
+        const avatarHtml = post.avatar && post.avatar.startsWith('/static/uploads/')
           ? `<img src="${post.avatar}" alt="Avatar">`
-          : (post.avatar || "👤");
-        let mediaHtml = "";
+          : (post.avatar || '👤');
+        let mediaHtml = '';
         if (post.media_url) {
           if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
             mediaHtml = `<div class="feed-media"><video controls><source src="${post.media_url}" type="video/mp4"></video></div>`;
@@ -75,7 +127,7 @@ function loadFeed() {
                 <div class="feed-author-name">${post.full_name || post.username}</div>
                 <div class="feed-author-username">@${post.username}</div>
               </div>
-              <div class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ""}</div>
+              <div class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
             </div>
             <div class="feed-content">${post.content}</div>
             ${mediaHtml}
@@ -85,9 +137,9 @@ function loadFeed() {
             </div>
           </div>
         `;
-      }).join("");
+      }).join('');
     })
-    .catch(err => console.error("Ошибка загрузки ленты:", err));
+    .catch(err => console.error('Ошибка загрузки ленты:', err));
 }
 
 function likePostFeed(postId) {
@@ -271,43 +323,25 @@ function loadChats() {
         container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
         return;
       }
-      container.innerHTML = chats.map(chat => `
-        <div class="chat-item" onclick="openChat(${chat.id})">
-          <div class="chat-avatar">${chat.type === 'group' ? '👥' : '👤'}</div>
-          <div class="chat-info">
-            <div class="chat-name">${chat.name || (chat.type === 'group' ? 'Групповой чат' : 'Личный чат')}</div>
-            <div class="chat-preview">${chat.member_count || 0} участников</div>
+      container.innerHTML = `
+        <div class="section-label">💬 Групповые чаты</div>
+        ${chats.filter(c => c.type === 'group').map(chat => `
+          <div class="chat-item" onclick="openChat(${chat.id})">
+            <div class="chat-avatar">👥</div>
+            <div class="chat-info">
+              <div class="chat-name">${chat.name || 'Групповой чат'}</div>
+              <div class="chat-preview">${chat.member_count || 0} участников</div>
+            </div>
+            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
           </div>
-          <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-        </div>
-      `).join('');
+        `).join('')}
+      `;
     })
     .catch(err => console.error('Ошибка загрузки чатов:', err));
 }
 
 function openChat(chatId) {
   window.location.href = `/chat/${chatId}`;
-}
-
-function createChat() {
-  const username = prompt('Введите имя пользователя:');
-  if (username && username.trim()) {
-    fetch('/api/create_chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.trim() })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.chat_id) {
-        loadChats();
-        openChat(data.chat_id);
-      } else {
-        alert(data.error || 'Ошибка создания чата');
-      }
-    })
-    .catch(err => console.error('Ошибка:', err));
-  }
 }
 
 function createGroup() {

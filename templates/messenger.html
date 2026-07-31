@@ -17,6 +17,7 @@
 
   <div id="app" class="app-hidden">
     <div class="panels-container">
+      <!-- Лента -->
       <div class="panel panel-feed active" id="panel-feed">
         <div class="panel-header"><h2>Лента</h2></div>
         <div class="panel-content" id="feedList">
@@ -24,20 +25,22 @@
         </div>
       </div>
 
+      <!-- Чаты -->
       <div class="panel panel-chats" id="panel-chats">
         <div class="panel-header">
           <h2>Чаты</h2>
           <div class="panel-actions">
             <input type="text" placeholder="Поиск..." class="search-input" id="chatSearch">
-            <button class="btn-icon" onclick="createChat()">➕</button>
-            <button class="btn-icon" onclick="createGroup()" title="Создать группу"><i class="fas fa-user-plus"></i></button>
+            <button class="btn-icon" onclick="createGroup()" title="Создать группу"><i class="fas fa-users"></i></button>
           </div>
         </div>
-        <div class="panel-content" id="chatList">
-          <div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>
+        <div class="panel-content">
+          <div id="friendsChatList" class="chat-list"></div>
+          <div id="chatList" class="chat-list"></div>
         </div>
       </div>
 
+      <!-- Сообщества -->
       <div class="panel panel-communities" id="panel-communities">
         <div class="panel-header">
           <h2>Сообщества</h2>
@@ -53,6 +56,7 @@
         </div>
       </div>
 
+      <!-- Профиль -->
       <div class="panel panel-profile" id="panel-profile">
         <div class="panel-header">
           <h2>Мой аккаунт</h2>
