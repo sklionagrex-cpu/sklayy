@@ -198,34 +198,31 @@ function closePostModal() {
 }
 
 function publishPost() {
-  const content = document.getElementById('postContent').value.trim();
+  const content = document.getElementById("postContent").value.trim();
   if (!content && !mediaUrl) {
-    showToast('❌ Введите текст или прикрепите медиа');
+    showToast("❌ Введите текст или прикрепите медиа");
     return;
   }
-  
   const data = { content: content };
   if (mediaUrl) data.media_url = mediaUrl;
-  
-  fetch('/api/posts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  fetch("/api/posts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      showToast('✅ Пост опубликован!');
+      showToast("✅ Пост опубликован!");
       closePostModal();
-      // Перенаправляем в мессенджер с параметром обновления ленты
-      window.location.href = '/app?feed=updated';
+      window.location.href = "/app?feed=updated";
     } else {
-      showToast('❌ ' + (data.error || 'Ошибка'));
+      showToast("❌ " + (data.error || "Ошибка"));
     }
   })
   .catch(err => {
-    console.error('Ошибка:', err);
-    showToast('❌ Ошибка публикации');
+    console.error("Ошибка:", err);
+    showToast("❌ Ошибка публикации");
   });
 }
 

@@ -6,6 +6,16 @@ const app = document.getElementById('app');
 let socket = null;
 
 function initApp() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("feed") === "updated") {
+    setTimeout(() => {
+      loadFeed();
+      if (window.history && window.history.replaceState) {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }, 500);
+  }
   connectSocket();
   loadChats();
   loadProfileData();

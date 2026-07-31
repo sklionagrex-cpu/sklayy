@@ -1,3 +1,4 @@
+import shutil
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room
 import sqlite3
@@ -12,6 +13,14 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 DB_PATH = 'sklay.db'
+BACKUP_DIR = "backups"
+os.makedirs(BACKUP_DIR, exist_ok=True)
+if os.path.exists(DB_PATH):
+    shutil.copy2(DB_PATH, os.path.join(BACKUP_DIR, f"backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db"))
+else:
+    backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith(".db")], reverse=True)
+    if backups:
+        shutil.copy2(os.path.join(BACKUP_DIR, backups[0]), DB_PATH)
 BACKUP_DIR = 'backups'
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
@@ -61,12 +70,6 @@ def get_user_by_username(username):
     user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
     conn.close()
     return user
-
-def get_feed_posts(user_id):
-    conn = get_db()
-    posts = conn.execute('SELECT p.*, u.username, u.full_name, u.avatar, (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes, c.name as community_name FROM posts p JOIN users u ON p.user_id = u.id LEFT JOIN communities c ON p.community_id = c.id ORDER BY p.created_at DESC').fetchall()
-    conn.close()
-    return posts
 
 def is_community_admin(community_id, user_id):
     conn = get_db()
@@ -586,3 +589,17 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+def get_feed_posts(user_id):
+    conn = get_db()
+    posts = conn.execute('''
+        SELECT p.*, u.username, u.full_name, u.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
+               c.name as community_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        ORDER BY p.created_at DESC
+    ''').fetchall()
+    conn.close()
+    return posts
