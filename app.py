@@ -11,42 +11,24 @@ app.secret_key = 'sklay_secret'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ===== БЭКАП БАЗЫ ДАННЫХ =====
+# ===== АВТОМАТИЧЕСКИЙ БЭКАП =====
 DB_PATH = 'sklay.db'
 BACKUP_DIR = 'backups'
 
-def ensure_backup_dir():
-    if not os.path.exists(BACKUP_DIR):
-        os.makedirs(BACKUP_DIR)
+if not os.path.exists(BACKUP_DIR):
+    os.makedirs(BACKUP_DIR)
 
-def backup_db():
-    ensure_backup_dir()
-    if os.path.exists(DB_PATH):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = os.path.join(BACKUP_DIR, f"sklay_backup_{timestamp}.db")
-        shutil.copy2(DB_PATH, backup_path)
-        # Оставляем только последние 10 бэкапов
-        backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')])
-        if len(backups) > 10:
-            for f in backups[:-10]:
-                os.remove(os.path.join(BACKUP_DIR, f))
-        return True
-    return False
-
-def restore_last_backup():
-    ensure_backup_dir()
+if os.path.exists(DB_PATH):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    shutil.copy2(DB_PATH, os.path.join(BACKUP_DIR, f"backup_{timestamp}.db"))
+    backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')])
+    if len(backups) > 10:
+        for f in backups[:-10]:
+            os.remove(os.path.join(BACKUP_DIR, f))
+else:
     backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')], reverse=True)
     if backups:
-        latest = os.path.join(BACKUP_DIR, backups[0])
-        shutil.copy2(latest, DB_PATH)
-        return True
-    return False
-
-# Восстанавливаем базу если её нет
-if not os.path.exists(DB_PATH):
-    if not restore_last_backup():
-        # Если бэкапа нет — создадим новую базу
-        pass
+        shutil.copy2(os.path.join(BACKUP_DIR, backups[0]), DB_PATH)
 
 # ===== БАЗА ДАННЫХ =====
 def get_db():
@@ -65,7 +47,6 @@ MEDIA_FOLDER = 'static/media'
 if not os.path.exists(MEDIA_FOLDER):
     os.makedirs(MEDIA_FOLDER)
 
-# ===== ИНИЦИАЛИЗАЦИЯ БАЗЫ =====
 def init_db():
     conn = get_db()
     conn.execute('''
@@ -186,19 +167,10 @@ def init_db():
 
 init_db()
 
-# Создаём бэкап после инициализации
-backup_db()
-
 # ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 def get_user_by_username(username):
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
-    conn.close()
-    return user
-
-def get_user_by_id(user_id):
-    conn = get_db()
-    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     return user
 
@@ -207,8 +179,7 @@ def get_feed_posts(user_id):
     posts = conn.execute('''
         SELECT p.*, u.username, u.full_name, u.avatar,
                (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name,
-               c.id as community_id
+               c.name as community_name
         FROM posts p
         JOIN users u ON p.user_id = u.id
         LEFT JOIN communities c ON p.community_id = c.id
