@@ -11,26 +11,18 @@ app.secret_key = 'sklay_secret'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ===== АВТОМАТИЧЕСКИЙ БЭКАП =====
+# ===== БЭКАП БАЗЫ ДАННЫХ =====
 DB_PATH = 'sklay.db'
 BACKUP_DIR = 'backups'
-
-if not os.path.exists(BACKUP_DIR):
-    os.makedirs(BACKUP_DIR)
+os.makedirs(BACKUP_DIR, exist_ok=True)
 
 if os.path.exists(DB_PATH):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    shutil.copy2(DB_PATH, os.path.join(BACKUP_DIR, f"backup_{timestamp}.db"))
-    backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')])
-    if len(backups) > 10:
-        for f in backups[:-10]:
-            os.remove(os.path.join(BACKUP_DIR, f))
+    shutil.copy2(DB_PATH, os.path.join(BACKUP_DIR, f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"))
 else:
     backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')], reverse=True)
     if backups:
         shutil.copy2(os.path.join(BACKUP_DIR, backups[0]), DB_PATH)
 
-# ===== БАЗА ДАННЫХ =====
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -40,126 +32,24 @@ def hash_password(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
 
 UPLOAD_FOLDER = 'static/uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
 MEDIA_FOLDER = 'static/media'
-if not os.path.exists(MEDIA_FOLDER):
-    os.makedirs(MEDIA_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(MEDIA_FOLDER, exist_ok=True)
 
 def init_db():
     conn = get_db()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            full_name TEXT,
-            email TEXT,
-            phone TEXT,
-            bio TEXT,
-            avatar TEXT,
-            status TEXT,
-            online INTEGER DEFAULT 0,
-            created_at TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS chats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            type TEXT,
-            created_by INTEGER,
-            created_at TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS chat_members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chat_id INTEGER,
-            user_id INTEGER,
-            role TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chat_id INTEGER,
-            user_id INTEGER,
-            content TEXT,
-            file_url TEXT,
-            file_type TEXT,
-            created_at TEXT,
-            deleted INTEGER DEFAULT 0
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS friends (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            friend_id INTEGER,
-            status TEXT,
-            created_at TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            community_id INTEGER,
-            content TEXT,
-            media_url TEXT,
-            created_at TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS likes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER,
-            user_id INTEGER,
-            created_at TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS communities (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            description TEXT,
-            avatar TEXT,
-            created_by INTEGER,
-            created_at TEXT,
-            FOREIGN KEY (created_by) REFERENCES users (id)
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS community_members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            community_id INTEGER,
-            user_id INTEGER,
-            role TEXT DEFAULT 'member',
-            joined_at TEXT,
-            FOREIGN KEY (community_id) REFERENCES communities (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS comments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER,
-            user_id INTEGER,
-            content TEXT,
-            media_url TEXT,
-            created_at TEXT,
-            FOREIGN KEY (post_id) REFERENCES posts (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
+    conn.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, full_name TEXT, email TEXT, phone TEXT, bio TEXT, avatar TEXT, status TEXT, online INTEGER DEFAULT 0, created_at TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS chats (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, type TEXT, created_by INTEGER, created_at TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS chat_members (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id INTEGER, user_id INTEGER, role TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id INTEGER, user_id INTEGER, content TEXT, file_url TEXT, file_type TEXT, created_at TEXT, deleted INTEGER DEFAULT 0)')
+    conn.execute('CREATE TABLE IF NOT EXISTS friends (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, friend_id INTEGER, status TEXT, created_at TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, community_id INTEGER, content TEXT, media_url TEXT, created_at TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS likes (id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, user_id INTEGER, created_at TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS communities (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, avatar TEXT, created_by INTEGER, created_at TEXT, FOREIGN KEY (created_by) REFERENCES users (id))')
+    conn.execute('CREATE TABLE IF NOT EXISTS community_members (id INTEGER PRIMARY KEY AUTOINCREMENT, community_id INTEGER, user_id INTEGER, role TEXT DEFAULT "member", joined_at TEXT, FOREIGN KEY (community_id) REFERENCES communities (id), FOREIGN KEY (user_id) REFERENCES users (id))')
+    conn.execute('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, user_id INTEGER, content TEXT, media_url TEXT, created_at TEXT, FOREIGN KEY (post_id) REFERENCES posts (id), FOREIGN KEY (user_id) REFERENCES users (id))')
     try:
         conn.execute('ALTER TABLE posts ADD COLUMN community_id INTEGER')
-    except:
-        pass
-    try:
-        conn.execute('ALTER TABLE community_members ADD COLUMN role TEXT DEFAULT "member"')
     except:
         pass
     conn.commit()
@@ -167,7 +57,6 @@ def init_db():
 
 init_db()
 
-# ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 def get_user_by_username(username):
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
@@ -176,28 +65,16 @@ def get_user_by_username(username):
 
 def get_feed_posts(user_id):
     conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN communities c ON p.community_id = c.id
-        ORDER BY p.created_at DESC
-    ''')
-    result = posts.fetchall()
+    posts = conn.execute('SELECT p.*, u.username, u.full_name, u.avatar, (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes, c.name as community_name FROM posts p JOIN users u ON p.user_id = u.id LEFT JOIN communities c ON p.community_id = c.id ORDER BY p.created_at DESC').fetchall()
     conn.close()
-    return result
+    return posts
 
 def is_community_admin(community_id, user_id):
     conn = get_db()
-    admin = conn.execute('''
-        SELECT * FROM community_members WHERE community_id = ? AND user_id = ? AND role = 'admin'
-    ''', (community_id, user_id)).fetchone()
+    admin = conn.execute('SELECT * FROM community_members WHERE community_id = ? AND user_id = ? AND role = "admin"', (community_id, user_id)).fetchone()
     conn.close()
     return admin is not None
 
-# ===== МАРШРУТЫ =====
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -228,8 +105,7 @@ def register():
         if get_user_by_username(username):
             return render_template('auth.html', error='Пользователь существует', mode='register')
         conn = get_db()
-        conn.execute('INSERT INTO users (username, password, created_at) VALUES (?, ?, ?)',
-                     (username, hash_password(password), datetime.now().isoformat()))
+        conn.execute('INSERT INTO users (username, password, created_at) VALUES (?, ?, ?)', (username, hash_password(password), datetime.now().isoformat()))
         conn.commit()
         conn.close()
         return redirect(url_for('login'))
@@ -258,22 +134,11 @@ def user_profile(username):
     if not user:
         return redirect(url_for('messenger'))
     conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.user_id = ? AND p.community_id IS NULL
-        ORDER BY p.created_at DESC
-    ''', (user['id'],)).fetchall()
+    posts = conn.execute('SELECT p.*, u.username, u.full_name, u.avatar, (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes FROM posts p JOIN users u ON p.user_id = u.id WHERE p.user_id = ? AND p.community_id IS NULL ORDER BY p.created_at DESC', (user['id'],)).fetchall()
     conn.close()
     is_friend = False
     conn = get_db()
-    friend = conn.execute('''
-        SELECT * FROM friends
-        WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
-        AND status = 'accepted'
-    ''', (session['user_id'], user['id'], user['id'], session['user_id'])).fetchone()
+    friend = conn.execute('SELECT * FROM friends WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status = "accepted"', (session['user_id'], user['id'], user['id'], session['user_id'])).fetchone()
     conn.close()
     if friend:
         is_friend = True
@@ -285,11 +150,7 @@ def chat_view(chat_id):
         return redirect(url_for('login'))
     conn = get_db()
     chat = conn.execute('SELECT * FROM chats WHERE id = ?', (chat_id,)).fetchone()
-    members = conn.execute('''
-        SELECT u.id, u.username, u.full_name, u.avatar, u.online
-        FROM chat_members cm JOIN users u ON cm.user_id = u.id
-        WHERE cm.chat_id = ?
-    ''', (chat_id,)).fetchall()
+    members = conn.execute('SELECT u.id, u.username, u.full_name, u.avatar, u.online FROM chat_members cm JOIN users u ON cm.user_id = u.id WHERE cm.chat_id = ?', (chat_id,)).fetchall()
     conn.close()
     return render_template('chat.html', chat=chat, members=members, username=session.get('username'))
 
@@ -298,7 +159,6 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# ===== API =====
 @app.route('/api/profile')
 def get_profile():
     if 'user_id' not in session:
@@ -367,12 +227,7 @@ def get_chats():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    chats = conn.execute('''
-        SELECT c.*, (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count
-        FROM chats c JOIN chat_members cm ON c.id = cm.chat_id
-        WHERE cm.user_id = ?
-        ORDER BY c.created_at DESC
-    ''', (session['user_id'],)).fetchall()
+    chats = conn.execute('SELECT c.*, (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count FROM chats c JOIN chat_members cm ON c.id = cm.chat_id WHERE cm.user_id = ? ORDER BY c.created_at DESC', (session['user_id'],)).fetchall()
     conn.close()
     return jsonify([dict(chat) for chat in chats])
 
@@ -381,12 +236,7 @@ def get_messages(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    msgs = conn.execute('''
-        SELECT m.*, u.username, u.full_name
-        FROM messages m JOIN users u ON m.user_id = u.id
-        WHERE m.chat_id = ? AND m.deleted = 0
-        ORDER BY m.created_at ASC LIMIT 100
-    ''', (chat_id,)).fetchall()
+    msgs = conn.execute('SELECT m.*, u.username, u.full_name FROM messages m JOIN users u ON m.user_id = u.id WHERE m.chat_id = ? AND m.deleted = 0 ORDER BY m.created_at ASC LIMIT 100', (chat_id,)).fetchall()
     conn.close()
     return jsonify([dict(m) for m in msgs])
 
@@ -400,18 +250,12 @@ def create_chat():
     if not target:
         conn.close()
         return jsonify({'error': 'User not found'}), 404
-    existing = conn.execute('''
-        SELECT c.id FROM chats c
-        JOIN chat_members cm1 ON c.id = cm1.chat_id
-        JOIN chat_members cm2 ON c.id = cm2.chat_id
-        WHERE c.type = 'private' AND cm1.user_id = ? AND cm2.user_id = ?
-    ''', (session['user_id'], target['id'])).fetchone()
+    existing = conn.execute('SELECT c.id FROM chats c JOIN chat_members cm1 ON c.id = cm1.chat_id JOIN chat_members cm2 ON c.id = cm2.chat_id WHERE c.type = "private" AND cm1.user_id = ? AND cm2.user_id = ?', (session['user_id'], target['id'])).fetchone()
     if existing:
         conn.close()
         return jsonify({'chat_id': existing['id']})
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)',
-                   ('private', session['user_id'], datetime.now().isoformat()))
+    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)', ('private', session['user_id'], datetime.now().isoformat()))
     chat_id = cursor.lastrowid
     cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
     cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
@@ -430,11 +274,9 @@ def create_group():
         return jsonify({'error': 'Нужно минимум 2 участника'}), 400
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO chats (name, type, created_by, created_at) VALUES (?, ?, ?, ?)',
-                   (name, 'group', session['user_id'], datetime.now().isoformat()))
+    cursor.execute('INSERT INTO chats (name, type, created_by, created_at) VALUES (?, ?, ?, ?)', (name, 'group', session['user_id'], datetime.now().isoformat()))
     chat_id = cursor.lastrowid
-    cursor.execute('INSERT INTO chat_members (chat_id, user_id, role) VALUES (?, ?, ?)',
-                   (chat_id, session['user_id'], 'admin'))
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id, role) VALUES (?, ?, ?)', (chat_id, session['user_id'], 'admin'))
     for username in members:
         user = get_user_by_username(username)
         if user:
@@ -448,17 +290,7 @@ def get_friends():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    friends = conn.execute('''
-        SELECT u.id, u.username, u.full_name, u.avatar, u.online
-        FROM friends f
-        JOIN users u ON f.friend_id = u.id
-        WHERE f.user_id = ? AND f.status = 'accepted'
-        UNION
-        SELECT u.id, u.username, u.full_name, u.avatar, u.online
-        FROM friends f
-        JOIN users u ON f.user_id = u.id
-        WHERE f.friend_id = ? AND f.status = 'accepted'
-    ''', (session['user_id'], session['user_id'])).fetchall()
+    friends = conn.execute('SELECT u.id, u.username, u.full_name, u.avatar, u.online FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ? AND f.status = "accepted" UNION SELECT u.id, u.username, u.full_name, u.avatar, u.online FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = "accepted"', (session['user_id'], session['user_id'])).fetchall()
     conn.close()
     return jsonify([dict(f) for f in friends])
 
@@ -467,11 +299,7 @@ def get_friend_requests():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    reqs = conn.execute('''
-        SELECT f.id as request_id, u.id, u.username, u.full_name, u.avatar
-        FROM friends f JOIN users u ON f.user_id = u.id
-        WHERE f.friend_id = ? AND f.status = 'pending'
-    ''', (session['user_id'],)).fetchall()
+    reqs = conn.execute('SELECT f.id as request_id, u.id, u.username, u.full_name, u.avatar FROM friends f JOIN users u ON f.user_id = u.id WHERE f.friend_id = ? AND f.status = "pending"', (session['user_id'],)).fetchall()
     conn.close()
     return jsonify([dict(r) for r in reqs])
 
@@ -486,15 +314,11 @@ def send_friend_request():
     if target['id'] == session['user_id']:
         return jsonify({'error': 'Cannot add yourself'}), 400
     conn = get_db()
-    existing = conn.execute('''
-        SELECT * FROM friends
-        WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
-    ''', (session['user_id'], target['id'], target['id'], session['user_id'])).fetchone()
+    existing = conn.execute('SELECT * FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)', (session['user_id'], target['id'], target['id'], session['user_id'])).fetchone()
     if existing:
         conn.close()
         return jsonify({'error': 'Already sent'}), 400
-    conn.execute('INSERT INTO friends (user_id, friend_id, status, created_at) VALUES (?, ?, ?, ?)',
-                 (session['user_id'], target['id'], 'pending', datetime.now().isoformat()))
+    conn.execute('INSERT INTO friends (user_id, friend_id, status, created_at) VALUES (?, ?, ?, ?)', (session['user_id'], target['id'], 'pending', datetime.now().isoformat()))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -504,8 +328,7 @@ def accept_friend(request_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    req = conn.execute('SELECT * FROM friends WHERE id = ? AND friend_id = ? AND status = "pending"',
-                       (request_id, session['user_id'])).fetchone()
+    req = conn.execute('SELECT * FROM friends WHERE id = ? AND friend_id = ? AND status = "pending"', (request_id, session['user_id'])).fetchone()
     if not req:
         conn.close()
         return jsonify({'error': 'Not found'}), 404
@@ -519,28 +342,17 @@ def reject_friend(request_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    conn.execute('DELETE FROM friends WHERE id = ? AND friend_id = ? AND status = "pending"',
-                 (request_id, session['user_id']))
+    conn.execute('DELETE FROM friends WHERE id = ? AND friend_id = ? AND status = "pending"', (request_id, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
 
-# ===== ПОСТЫ =====
 @app.route('/api/posts')
 def get_posts():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN communities c ON p.community_id = c.id
-        WHERE p.user_id = ? AND p.community_id IS NULL
-        ORDER BY p.created_at DESC
-    ''', (session['user_id'],)).fetchall()
+    posts = conn.execute('SELECT p.*, u.username, u.full_name, u.avatar, (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes, c.name as community_name FROM posts p JOIN users u ON p.user_id = u.id LEFT JOIN communities c ON p.community_id = c.id WHERE p.user_id = ? AND p.community_id IS NULL ORDER BY p.created_at DESC', (session['user_id'],)).fetchall()
     conn.close()
     return jsonify([dict(post) for post in posts])
 
@@ -555,10 +367,7 @@ def create_post():
     if not content and not media_url:
         return jsonify({'error': 'Content or media required'}), 400
     conn = get_db()
-    conn.execute(
-        'INSERT INTO posts (user_id, content, media_url, community_id, created_at) VALUES (?, ?, ?, ?, ?)',
-        (session['user_id'], content, media_url, community_id, datetime.now().isoformat())
-    )
+    conn.execute('INSERT INTO posts (user_id, content, media_url, community_id, created_at) VALUES (?, ?, ?, ?, ?)', (session['user_id'], content, media_url, community_id, datetime.now().isoformat()))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -568,20 +377,11 @@ def like_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    existing = conn.execute(
-        'SELECT * FROM likes WHERE post_id = ? AND user_id = ?',
-        (post_id, session['user_id'])
-    ).fetchone()
+    existing = conn.execute('SELECT * FROM likes WHERE post_id = ? AND user_id = ?', (post_id, session['user_id'])).fetchone()
     if existing:
-        conn.execute(
-            'DELETE FROM likes WHERE post_id = ? AND user_id = ?',
-            (post_id, session['user_id'])
-        )
+        conn.execute('DELETE FROM likes WHERE post_id = ? AND user_id = ?', (post_id, session['user_id']))
     else:
-        conn.execute(
-            'INSERT INTO likes (post_id, user_id, created_at) VALUES (?, ?, ?)',
-            (post_id, session['user_id'], datetime.now().isoformat())
-        )
+        conn.execute('INSERT INTO likes (post_id, user_id, created_at) VALUES (?, ?, ?)', (post_id, session['user_id'], datetime.now().isoformat()))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -591,10 +391,7 @@ def delete_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    post = conn.execute(
-        'SELECT * FROM posts WHERE id = ? AND user_id = ?',
-        (post_id, session['user_id'])
-    ).fetchone()
+    post = conn.execute('SELECT * FROM posts WHERE id = ? AND user_id = ?', (post_id, session['user_id'])).fetchone()
     if not post:
         conn.close()
         return jsonify({'error': 'Post not found'}), 404
@@ -604,19 +401,12 @@ def delete_post(post_id):
     conn.close()
     return jsonify({'success': True})
 
-# ===== КОММЕНТАРИИ =====
 @app.route('/api/posts/<int:post_id>/comments')
 def get_comments(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    comments = conn.execute('''
-        SELECT c.*, u.username, u.full_name, u.avatar
-        FROM comments c
-        JOIN users u ON c.user_id = u.id
-        WHERE c.post_id = ?
-        ORDER BY c.created_at ASC
-    ''', (post_id,)).fetchall()
+    comments = conn.execute('SELECT c.*, u.username, u.full_name, u.avatar FROM comments c JOIN users u ON c.user_id = u.id WHERE c.post_id = ? ORDER BY c.created_at ASC', (post_id,)).fetchall()
     conn.close()
     return jsonify([dict(c) for c in comments])
 
@@ -631,18 +421,10 @@ def add_comment(post_id):
         return jsonify({'error': 'Content or media required'}), 400
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        'INSERT INTO comments (post_id, user_id, content, media_url, created_at) VALUES (?, ?, ?, ?, ?)',
-        (post_id, session['user_id'], content, media_url, datetime.now().isoformat())
-    )
+    cursor.execute('INSERT INTO comments (post_id, user_id, content, media_url, created_at) VALUES (?, ?, ?, ?, ?)', (post_id, session['user_id'], content, media_url, datetime.now().isoformat()))
     comment_id = cursor.lastrowid
     conn.commit()
-    comment = conn.execute('''
-        SELECT c.*, u.username, u.full_name, u.avatar
-        FROM comments c
-        JOIN users u ON c.user_id = u.id
-        WHERE c.id = ?
-    ''', (comment_id,)).fetchone()
+    comment = conn.execute('SELECT c.*, u.username, u.full_name, u.avatar FROM comments c JOIN users u ON c.user_id = u.id WHERE c.id = ?', (comment_id,)).fetchone()
     conn.close()
     return jsonify(dict(comment))
 
@@ -651,10 +433,7 @@ def delete_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    comment = conn.execute(
-        'SELECT * FROM comments WHERE id = ? AND user_id = ?',
-        (comment_id, session['user_id'])
-    ).fetchone()
+    comment = conn.execute('SELECT * FROM comments WHERE id = ? AND user_id = ?', (comment_id, session['user_id'])).fetchone()
     if not comment:
         conn.close()
         return jsonify({'error': 'Comment not found'}), 404
@@ -663,7 +442,6 @@ def delete_comment(comment_id):
     conn.close()
     return jsonify({'success': True})
 
-# ===== ЛЕНТА =====
 @app.route('/api/feed')
 def get_feed():
     if 'user_id' not in session:
@@ -671,23 +449,15 @@ def get_feed():
     posts = get_feed_posts(session['user_id'])
     return jsonify([dict(p) for p in posts])
 
-# ===== СООБЩЕСТВА =====
 @app.route('/api/communities')
 def get_communities():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    my_communities = conn.execute('''
-        SELECT c.*, cm.role FROM communities c
-        JOIN community_members cm ON c.id = cm.community_id
-        WHERE cm.user_id = ?
-    ''', (session['user_id'],)).fetchall()
+    my_communities = conn.execute('SELECT c.*, cm.role FROM communities c JOIN community_members cm ON c.id = cm.community_id WHERE cm.user_id = ?', (session['user_id'],)).fetchall()
     all_communities = conn.execute('SELECT * FROM communities ORDER BY created_at DESC').fetchall()
     conn.close()
-    return jsonify({
-        'my': [dict(c) for c in my_communities],
-        'all': [dict(c) for c in all_communities]
-    })
+    return jsonify({'my': [dict(c) for c in my_communities], 'all': [dict(c) for c in all_communities]})
 
 @app.route('/api/communities/<int:community_id>')
 def get_community(community_id):
@@ -695,26 +465,10 @@ def get_community(community_id):
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
     community = conn.execute('SELECT * FROM communities WHERE id = ?', (community_id,)).fetchone()
-    members = conn.execute('''
-        SELECT u.id, u.username, u.full_name, u.avatar, cm.role
-        FROM community_members cm
-        JOIN users u ON cm.user_id = u.id
-        WHERE cm.community_id = ?
-    ''', (community_id,)).fetchall()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.community_id = ?
-        ORDER BY p.created_at DESC
-    ''', (community_id,)).fetchall()
+    members = conn.execute('SELECT u.id, u.username, u.full_name, u.avatar, cm.role FROM community_members cm JOIN users u ON cm.user_id = u.id WHERE cm.community_id = ?', (community_id,)).fetchall()
+    posts = conn.execute('SELECT p.*, u.username, u.full_name, u.avatar, (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes FROM posts p JOIN users u ON p.user_id = u.id WHERE p.community_id = ? ORDER BY p.created_at DESC', (community_id,)).fetchall()
     conn.close()
-    return jsonify({
-        'community': dict(community),
-        'members': [dict(m) for m in members],
-        'posts': [dict(p) for p in posts]
-    })
+    return jsonify({'community': dict(community), 'members': [dict(m) for m in members], 'posts': [dict(p) for p in posts]})
 
 @app.route('/api/communities', methods=['POST'])
 def create_community():
@@ -727,15 +481,9 @@ def create_community():
         return jsonify({'error': 'Name required'}), 400
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        'INSERT INTO communities (name, description, created_by, created_at) VALUES (?, ?, ?, ?)',
-        (name, description, session['user_id'], datetime.now().isoformat())
-    )
+    cursor.execute('INSERT INTO communities (name, description, created_by, created_at) VALUES (?, ?, ?, ?)', (name, description, session['user_id'], datetime.now().isoformat()))
     community_id = cursor.lastrowid
-    cursor.execute(
-        'INSERT INTO community_members (community_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)',
-        (community_id, session['user_id'], 'admin', datetime.now().isoformat())
-    )
+    cursor.execute('INSERT INTO community_members (community_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)', (community_id, session['user_id'], 'admin', datetime.now().isoformat()))
     conn.commit()
     conn.close()
     return jsonify({'community_id': community_id})
@@ -745,17 +493,11 @@ def join_community(community_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    existing = conn.execute(
-        'SELECT * FROM community_members WHERE community_id = ? AND user_id = ?',
-        (community_id, session['user_id'])
-    ).fetchone()
+    existing = conn.execute('SELECT * FROM community_members WHERE community_id = ? AND user_id = ?', (community_id, session['user_id'])).fetchone()
     if existing:
         conn.close()
         return jsonify({'error': 'Already joined'}), 400
-    conn.execute(
-        'INSERT INTO community_members (community_id, user_id, joined_at) VALUES (?, ?, ?)',
-        (community_id, session['user_id'], datetime.now().isoformat())
-    )
+    conn.execute('INSERT INTO community_members (community_id, user_id, joined_at) VALUES (?, ?, ?)', (community_id, session['user_id'], datetime.now().isoformat()))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -765,20 +507,14 @@ def leave_community(community_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    member = conn.execute(
-        'SELECT * FROM community_members WHERE community_id = ? AND user_id = ?',
-        (community_id, session['user_id'])
-    ).fetchone()
+    member = conn.execute('SELECT * FROM community_members WHERE community_id = ? AND user_id = ?', (community_id, session['user_id'])).fetchone()
     if not member:
         conn.close()
         return jsonify({'error': 'Not a member'}), 400
     if member['role'] == 'admin':
         conn.close()
         return jsonify({'error': 'Admin cannot leave'}), 400
-    conn.execute(
-        'DELETE FROM community_members WHERE community_id = ? AND user_id = ?',
-        (community_id, session['user_id'])
-    )
+    conn.execute('DELETE FROM community_members WHERE community_id = ? AND user_id = ?', (community_id, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -794,17 +530,11 @@ def make_admin(community_id):
     if not user_id:
         return jsonify({'error': 'User ID required'}), 400
     conn = get_db()
-    member = conn.execute(
-        'SELECT * FROM community_members WHERE community_id = ? AND user_id = ?',
-        (community_id, user_id)
-    ).fetchone()
+    member = conn.execute('SELECT * FROM community_members WHERE community_id = ? AND user_id = ?', (community_id, user_id)).fetchone()
     if not member:
         conn.close()
         return jsonify({'error': 'User is not a member'}), 400
-    conn.execute(
-        'UPDATE community_members SET role = "admin" WHERE community_id = ? AND user_id = ?',
-        (community_id, user_id)
-    )
+    conn.execute('UPDATE community_members SET role = "admin" WHERE community_id = ? AND user_id = ?', (community_id, user_id))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -831,7 +561,6 @@ def update_community_avatar(community_id):
     conn.close()
     return jsonify({'url': url})
 
-# ===== WEBSOCKET =====
 @socketio.on('send_message')
 def handle_send_message(data):
     chat_id = data.get('chat_id')
@@ -842,17 +571,10 @@ def handle_send_message(data):
         return
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        'INSERT INTO messages (chat_id, user_id, content, file_url, created_at) VALUES (?, ?, ?, ?, ?)',
-        (chat_id, user_id, content, file_url, datetime.now().isoformat())
-    )
+    cursor.execute('INSERT INTO messages (chat_id, user_id, content, file_url, created_at) VALUES (?, ?, ?, ?, ?)', (chat_id, user_id, content, file_url, datetime.now().isoformat()))
     msg_id = cursor.lastrowid
     conn.commit()
-    msg = conn.execute('''
-        SELECT m.*, u.username, u.full_name
-        FROM messages m JOIN users u ON m.user_id = u.id
-        WHERE m.id = ?
-    ''', (msg_id,)).fetchone()
+    msg = conn.execute('SELECT m.*, u.username, u.full_name FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = ?', (msg_id,)).fetchone()
     conn.close()
     emit('new_message', dict(msg), room=f'chat_{chat_id}')
 
