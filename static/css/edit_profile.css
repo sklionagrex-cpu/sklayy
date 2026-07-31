@@ -1,0 +1,21 @@
+body { background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; padding: 16px; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+.edit-container { max-width: 500px; width: 100%; margin: 0 auto; }
+.back-btn { color: #f0f0f5; text-decoration: none; font-size: 24px; display: inline-block; margin-bottom: 20px; }
+.back-btn:hover { color: #5B6CFF; }
+.edit-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border-radius: 24px; padding: 28px; border: 1px solid rgba(255,255,255,0.06); }
+.avatar-section { text-align: center; margin-bottom: 24px; }
+.avatar-circle { width: 100px; height: 100px; border-radius: 50%; background: rgba(91,108,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 50px; margin: 0 auto 12px; overflow: hidden; border: 3px solid rgba(91,108,255,0.2); }
+.avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-edit { background: #5B6CFF; border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; box-shadow: 0 0 20px rgba(91,108,255,0.3); transition: all 0.3s; }
+.avatar-edit:hover { transform: scale(1.1); }
+.edit-row { margin-bottom: 16px; }
+.edit-row label { display: block; color: #888; font-size: 13px; margin-bottom: 4px; font-weight: 500; }
+.edit-row input, .edit-row textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #f0f0f5; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: all 0.3s; box-sizing: border-box; }
+.edit-row input:focus, .edit-row textarea:focus { border-color: #5B6CFF; background: rgba(255,255,255,0.08); }
+.edit-row textarea { resize: vertical; min-height: 80px; }
+.edit-buttons { display: flex; gap: 12px; margin-top: 20px; }
+.edit-buttons .btn-primary, .edit-buttons .btn-secondary { flex: 1; padding: 12px; border-radius: 12px; font-weight: 600; font-size: 15px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-align: center; transition: all 0.3s; text-decoration: none; }
+.edit-buttons .btn-primary { background: #5B6CFF; color: #fff; }
+.edit-buttons .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(91,108,255,0.3); }
+.edit-buttons .btn-secondary { background: rgba(255,255,255,0.05); color: #f0f0f5; display: flex; align-items: center; justify-content: center; }
+.edit-buttons .btn-secondary:hover { background: rgba(255,255,255,0.1); }

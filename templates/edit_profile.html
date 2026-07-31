@@ -1,38 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sklay - Редактировать профиль</title>
   <link rel="stylesheet" href="/static/css/profile.css">
+  <link rel="stylesheet" href="/static/css/edit_profile.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <style>
-    body { background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; padding: 16px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .edit-container { max-width: 500px; width: 100%; margin: 0 auto; }
-    .back-btn { color: #f0f0f5; text-decoration: none; font-size: 24px; display: inline-block; margin-bottom: 20px; }
-    .edit-card { background: rgba(255,255,255,0.03); border-radius: 24px; padding: 24px; border: 1px solid rgba(255,255,255,0.06); }
-    .avatar-section { text-align: center; margin-bottom: 24px; }
-    .avatar-circle { width: 100px; height: 100px; border-radius: 50%; background: rgba(91,108,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 50px; margin: 0 auto 12px; overflow: hidden; border: 3px solid rgba(91,108,255,0.2); }
-    .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
-    .avatar-edit { background: #5B6CFF; border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; box-shadow: 0 0 20px rgba(91,108,255,0.3); transition: all 0.3s; }
-    .avatar-edit:hover { transform: scale(1.1); }
-    .edit-row { margin-bottom: 16px; }
-    .edit-row label { display: block; color: #888; font-size: 13px; margin-bottom: 4px; font-weight: 500; }
-    .edit-row input, .edit-row textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #f0f0f5; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: all 0.3s; }
-    .edit-row input:focus, .edit-row textarea:focus { border-color: #5B6CFF; background: rgba(255,255,255,0.08); }
-    .edit-row textarea { resize: vertical; min-height: 80px; }
-    .edit-buttons { display: flex; gap: 12px; margin-top: 20px; }
-    .edit-buttons .btn-primary, .edit-buttons .btn-secondary { flex: 1; padding: 12px; border-radius: 12px; font-weight: 600; font-size: 15px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-align: center; transition: all 0.3s; }
-    .edit-buttons .btn-primary { background: #5B6CFF; color: #fff; }
-    .edit-buttons .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(91,108,255,0.3); }
-    .edit-buttons .btn-secondary { background: rgba(255,255,255,0.05); color: #f0f0f5; text-decoration: none; display: flex; align-items: center; justify-content: center; }
-    .edit-buttons .btn-secondary:hover { background: rgba(255,255,255,0.1); }
-  </style>
 </head>
 <body>
 <div class="edit-container">
-  <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+  <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i> Назад</a>
   <div class="edit-card">
     <div class="avatar-section">
       <div class="avatar-circle" id="avatarDisplay">
@@ -51,20 +30,20 @@
         <input type="text" id="edit-full_name" value="{{ user.full_name or '' }}">
       </div>
       <div class="edit-row">
-        <label>Email</label>
-        <input type="email" id="edit-email" value="{{ user.email or '' }}">
-      </div>
-      <div class="edit-row">
-        <label>Телефон</label>
-        <input type="tel" id="edit-phone" value="{{ user.phone or '' }}">
+        <label>Статус</label>
+        <input type="text" id="edit-status" value="{{ user.status or '' }}" placeholder="Введите ваш статус...">
       </div>
       <div class="edit-row">
         <label>О себе</label>
         <textarea id="edit-bio" rows="3">{{ user.bio or '' }}</textarea>
       </div>
       <div class="edit-row">
-        <label>Статус</label>
-        <input type="text" id="edit-status" value="{{ user.status or '' }}" placeholder="Введите ваш статус...">
+        <label>Email</label>
+        <input type="email" id="edit-email" value="{{ user.email or '' }}">
+      </div>
+      <div class="edit-row">
+        <label>Телефон</label>
+        <input type="tel" id="edit-phone" value="{{ user.phone or '' }}">
       </div>
       <div class="edit-buttons">
         <button class="btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Сохранить</button>
@@ -79,24 +58,27 @@ function uploadAvatar(input) {
   if (!file) return;
   const formData = new FormData();
   formData.append('avatar', file);
-  fetch('/api/upload_avatar', { method: 'POST', body: formData })
-    .then(res => res.json())
-    .then(data => {
-      if (data.url) {
-        document.getElementById('avatarDisplay').innerHTML = `<img src="${data.url}?t=${Date.now()}" alt="Avatar">`;
-        alert('Аватар обновлён!');
-      }
-    })
-    .catch(err => alert('Ошибка загрузки'));
+  fetch('/api/upload_avatar', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.url) {
+      document.getElementById('avatarDisplay').innerHTML = '<img src="' + data.url + '?t=' + Date.now() + '" alt="Avatar">';
+      alert('Аватар обновлён!');
+    }
+  })
+  .catch(err => alert('Ошибка загрузки: ' + err));
 }
 
 function saveProfile() {
   const data = {
     full_name: document.getElementById('edit-full_name').value,
-    email: document.getElementById('edit-email').value,
-    phone: document.getElementById('edit-phone').value,
+    status: document.getElementById('edit-status').value,
     bio: document.getElementById('edit-bio').value,
-    status: document.getElementById('edit-status').value
+    email: document.getElementById('edit-email').value,
+    phone: document.getElementById('edit-phone').value
   };
   fetch('/api/profile', {
     method: 'PUT',
@@ -105,10 +87,10 @@ function saveProfile() {
   })
   .then(res => res.json())
   .then(() => {
-    alert('Профиль обновлён!');
+    alert('✅ Профиль обновлён!');
     window.location.href = '/app';
   })
-  .catch(err => alert('Ошибка обновления: ' + err));
+  .catch(err => alert('❌ Ошибка обновления: ' + err));
 }
 </script>
 </body>
