@@ -29,6 +29,7 @@
     .actions .btn-secondary { background: rgba(255,255,255,0.05); color: #f0f0f5; display: flex; align-items: center; justify-content: center; }
     .actions .btn-secondary:hover { background: rgba(255,255,255,0.1); }
     #avatarInput { display: none; }
+    .loading { opacity: 0.5; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -45,6 +46,7 @@
       </div>
       <button class="avatar-btn" onclick="document.getElementById('avatarInput').click()"><i class="fas fa-camera"></i></button>
       <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
+      <div id="uploadStatus" style="color:#888;font-size:13px;margin-top:8px;"></div>
     </div>
 
     <div class="field">
@@ -78,23 +80,27 @@
 <script>
 function uploadAvatar(input) {
   const file = input.files[0];
+  const status = document.getElementById('uploadStatus');
+  
   if (!file) {
-    alert('Файл не выбран');
+    status.textContent = '❌ Файл не выбран';
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    alert('Файл слишком большой (макс. 5MB)');
+    status.textContent = '❌ Файл слишком большой (макс. 5MB)';
     input.value = '';
     return;
   }
 
   if (!file.type.startsWith('image/')) {
-    alert('Можно загружать только изображения');
+    status.textContent = '❌ Можно загружать только изображения';
     input.value = '';
     return;
   }
 
+  status.textContent = '⏳ Загрузка...';
+  
   const formData = new FormData();
   formData.append('avatar', file);
 
@@ -107,13 +113,17 @@ function uploadAvatar(input) {
     if (data.url) {
       const avatarDisplay = document.getElementById('avatarDisplay');
       avatarDisplay.innerHTML = `<img src="${data.url}?t=${Date.now()}" alt="Avatar">`;
-      alert('✅ Аватар обновлён!');
+      status.textContent = '✅ Аватар обновлён!';
+      // Обновляем страницу через 1 секунду, чтобы показать изменения
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
     } else {
-      alert('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+      status.textContent = '❌ ' + (data.error || 'Неизвестная ошибка');
     }
   })
   .catch(err => {
-    alert('❌ Ошибка загрузки: ' + err);
+    status.textContent = '❌ Ошибка загрузки: ' + err;
   });
 
   input.value = '';
