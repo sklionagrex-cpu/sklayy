@@ -842,6 +842,7 @@ if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
 
 # ===== ЛЕНТА =====
+
 def get_feed_posts(user_id):
     conn = get_db()
     posts = conn.execute('''
