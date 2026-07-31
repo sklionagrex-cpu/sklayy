@@ -7,7 +7,6 @@ let currentUser = {};
 let mediaUrl = null;
 
 function initApp() {
-  console.log('🚀 Инициализация мессенджера');
   connectSocket();
   loadChats();
   loadFriendsChats();
@@ -17,12 +16,7 @@ function initApp() {
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('feed') === 'updated') {
-    setTimeout(() => {
-      loadFeed();
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }, 500);
+    setTimeout(() => { loadFeed(); }, 500);
   }
 
   window.addEventListener('message', (event) => {
@@ -37,17 +31,15 @@ function initApp() {
     }
   });
 
-  const feedPanel = document.getElementById('panel-feed');
-  const feedObserver = new MutationObserver(() => {
-    if (feedPanel.classList.contains('active')) {
-      loadFeed();
+  document.addEventListener('click', function(e) {
+    const results = document.getElementById('searchResults');
+    if (results && !results.contains(e.target) && e.target.id !== 'searchUsers') {
+      results.style.display = 'none';
     }
   });
-  feedObserver.observe(feedPanel, { attributes: true, attributeFilter: ['class'] });
 }
 
 function loadFeed() {
-  console.log('📡 Загрузка ленты...');
   fetch('/api/feed')
     .then(res => res.json())
     .then(posts => {
@@ -451,11 +443,14 @@ function searchUsers(query) {
       }
       resultsContainer.innerHTML = users.map(u => `
         <div class="search-result">
-          <span>${u.full_name || u.username} (@${u.username})</span>
+          <span>${u.full_name || u.username}</span>
+          <span style="color:#888;font-size:12px;">@${u.username}</span>
           <button class="btn-sm" onclick="sendFriendRequest('${u.username}')">➕</button>
         </div>
       `).join('');
       resultsContainer.style.display = 'block';
+      // Скроллим к результатам плавно
+      resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     })
     .catch(err => console.error('Ошибка поиска:', err));
 }
@@ -684,5 +679,3 @@ if (splashShown) {
     }
   }, 1200);
 }
-
-console.log('🚀 Sklay мессенджер загружен!');

@@ -60,18 +60,18 @@
       <div class="panel panel-profile" id="panel-profile">
         <div class="panel-header">
           <h2>Мой аккаунт</h2>
-          <a href="/profile/edit" class="icon-link" title="Редактировать профиль">
+          <button class="icon-link" onclick="window.location.href='/profile/edit'" title="Редактировать профиль">
             <i class="fas fa-pen"></i>
-          </a>
+          </button>
         </div>
         <div class="panel-content profile-content">
-          <!-- Аватар и основная информация -->
+          <!-- Аватар -->
           <div class="profile-avatar" id="panelAvatar">👤</div>
           <div class="profile-name" id="panelName">{{ username }}</div>
           <div class="profile-status" id="panelStatus" style="color:#888;">Статус не установлен</div>
           <div class="profile-bio" id="panelBio" style="color:#666;font-size:14px;">Добавьте информацию о себе</div>
 
-          <!-- Вкладки внутри профиля -->
+          <!-- Вкладки -->
           <div class="profile-sub-tabs">
             <button class="sub-tab active" data-subtab="info" onclick="switchProfileSubTab('info')"><i class="fas fa-user"></i> Информация</button>
             <button class="sub-tab" data-subtab="posts" onclick="switchProfileSubTab('posts')"><i class="fas fa-newspaper"></i> Посты</button>
@@ -81,14 +81,14 @@
           <!-- Информация -->
           <div class="sub-tab-content active" id="subtab-info">
             <div class="info-group">
-              <div class="info-row"><span class="info-label">👤 Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
-              <div class="info-row"><span class="info-label">💬 Статус</span><span class="info-value" id="panelStatusFull">Не установлен</span></div>
-              <div class="info-row"><span class="info-label">📝 О себе</span><span class="info-value" id="panelBioFull">Не указано</span></div>
-              <div class="info-row"><span class="info-label">📅 Регистрация</span><span class="info-value" id="panelCreatedAt">—</span></div>
+              <div class="info-row"><span class="info-label">Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
+              <div class="info-row"><span class="info-label">Статус</span><span class="info-value" id="panelStatusFull">Не установлен</span></div>
+              <div class="info-row"><span class="info-label">О себе</span><span class="info-value" id="panelBioFull">Не указано</span></div>
+              <div class="info-row"><span class="info-label">Регистрация</span><span class="info-value" id="panelCreatedAt">—</span></div>
             </div>
           </div>
 
-          <!-- ПОСТЫ -->
+          <!-- Посты -->
           <div class="sub-tab-content" id="subtab-posts">
             <div class="posts-header">
               <button class="btn-primary" onclick="openPostModal()"><i class="fas fa-plus"></i> Создать пост</button>
@@ -98,18 +98,21 @@
             </div>
           </div>
 
-          <!-- ДРУЗЬЯ (красиво) -->
+          <!-- Друзья -->
           <div class="sub-tab-content" id="subtab-friends">
             <div class="friends-container">
+              <!-- Поиск -->
               <div class="friends-search">
                 <input type="text" id="searchUsers" placeholder="Поиск друзей..." oninput="searchUsers(this.value)">
                 <button class="btn-primary" onclick="addFriend()"><i class="fas fa-user-plus"></i> Добавить</button>
               </div>
               <div id="searchResults" class="search-results" style="display:none;"></div>
+              <!-- Табы друзей -->
               <div class="friends-tabs">
                 <button class="friend-tab active" data-ftab="list" onclick="switchFriendTab('list')">Все друзья</button>
                 <button class="friend-tab" data-ftab="incoming" onclick="switchFriendTab('incoming')">Заявки</button>
               </div>
+              <!-- Список -->
               <div id="friendsList" class="friends-list"></div>
               <div id="friendRequests" class="friends-list" style="display:none;"></div>
             </div>
