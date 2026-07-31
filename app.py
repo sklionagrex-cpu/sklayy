@@ -28,7 +28,6 @@ if not os.path.exists(MEDIA_FOLDER):
 
 def init_db():
     conn = get_db()
-    # пользователи
     conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,7 +43,6 @@ def init_db():
             created_at TEXT
         )
     ''')
-    # чаты
     conn.execute('''
         CREATE TABLE IF NOT EXISTS chats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,7 +72,6 @@ def init_db():
             deleted INTEGER DEFAULT 0
         )
     ''')
-    # друзья
     conn.execute('''
         CREATE TABLE IF NOT EXISTS friends (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +81,6 @@ def init_db():
             created_at TEXT
         )
     ''')
-    # посты (личные и сообществ)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,7 +99,6 @@ def init_db():
             created_at TEXT
         )
     ''')
-    # сообщества
     conn.execute('''
         CREATE TABLE IF NOT EXISTS communities (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125,7 +120,6 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
-    # добавим колонку community_id, если нет
     try:
         conn.execute('ALTER TABLE posts ADD COLUMN community_id INTEGER')
     except:
@@ -135,45 +129,32 @@ def init_db():
 
 init_db()
 
-# ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 def get_user_by_username(username):
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
     conn.close()
     return user
 
-def get_user_by_id(user_id):
+def get_feed_posts(user_id):
     conn = get_db()
-    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    posts = conn.execute('''
+        SELECT p.*, u.username, u.full_name, u.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
+               c.name as community_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        WHERE (
+            p.user_id = ?
+            OR p.user_id IN (SELECT friend_id FROM friends WHERE user_id = ? AND status = 'accepted')
+            OR p.user_id IN (SELECT user_id FROM friends WHERE friend_id = ? AND status = 'accepted')
+            OR p.community_id IN (SELECT community_id FROM community_members WHERE user_id = ?)
+        )
+        ORDER BY p.created_at DESC
+    ''', (user_id, user_id, user_id, user_id))
+    result = posts.fetchall()
     conn.close()
-    return user
-
-def get_friends(user_id):
-    conn = get_db()
-    friends = conn.execute('''
-        SELECT u.id, u.username, u.full_name, u.avatar, u.online
-        FROM friends f
-        JOIN users u ON f.friend_id = u.id
-        WHERE f.user_id = ? AND f.status = 'accepted'
-        UNION
-        SELECT u.id, u.username, u.full_name, u.avatar, u.online
-        FROM friends f
-        JOIN users u ON f.user_id = u.id
-        WHERE f.friend_id = ? AND f.status = 'accepted'
-    ''', (user_id, user_id)).fetchall()
-    conn.close()
-    return friends
-
-def get_communities_for_user(user_id):
-    conn = get_db()
-    communities = conn.execute('''
-        SELECT c.*
-        FROM communities c
-        JOIN community_members cm ON c.id = cm.community_id
-        WHERE cm.user_id = ?
-    ''', (user_id,)).fetchall()
-    conn.close()
-    return communities
+    return result
 
 # ===== МАРШРУТЫ =====
 @app.route('/')
@@ -235,7 +216,6 @@ def user_profile(username):
     user = get_user_by_username(username)
     if not user:
         return redirect(url_for('messenger'))
-    # Получаем посты пользователя
     conn = get_db()
     posts = conn.execute('''
         SELECT p.*, u.username, u.full_name, u.avatar,
@@ -246,12 +226,11 @@ def user_profile(username):
         ORDER BY p.created_at DESC
     ''', (user['id'],)).fetchall()
     conn.close()
-    # Проверяем, друзья ли они
     is_friend = False
     conn = get_db()
     friend = conn.execute('''
         SELECT * FROM friends
-        WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+        WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
         AND status = 'accepted'
     ''', (session['user_id'], user['id'], user['id'], session['user_id'])).fetchone()
     conn.close()
@@ -398,7 +377,6 @@ def create_chat():
     if not target:
         conn.close()
         return jsonify({'error': 'User not found'}), 404
-    # Проверяем, есть ли уже чат между пользователями
     existing = conn.execute('''
         SELECT c.id FROM chats c
         JOIN chat_members cm1 ON c.id = cm1.chat_id
@@ -501,7 +479,19 @@ def search_messages(chat_id):
 def get_friends():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
-    friends = get_friends(session['user_id'])
+    conn = get_db()
+    friends = conn.execute('''
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online
+        FROM friends f
+        JOIN users u ON f.friend_id = u.id
+        WHERE f.user_id = ? AND f.status = 'accepted'
+        UNION
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online
+        FROM friends f
+        JOIN users u ON f.user_id = u.id
+        WHERE f.friend_id = ? AND f.status = 'accepted'
+    ''', (session['user_id'], session['user_id'])).fetchall()
+    conn.close()
     return jsonify([dict(f) for f in friends])
 
 @app.route('/api/friend_requests')
@@ -710,15 +700,24 @@ def delete_post(post_id):
     return jsonify({'success': True})
 
 # ===== ЛЕНТА =====
+@app.route('/api/feed')
+def get_feed():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    posts = get_feed_posts(session['user_id'])
+    return jsonify([dict(p) for p in posts])
+
 # ===== СООБЩЕСТВА =====
 @app.route('/api/communities')
 def get_communities():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     conn = get_db()
-    # Все сообщества, в которых состоит пользователь
-    my_communities = get_communities_for_user(session['user_id'])
-    # Все сообщества (для поиска)
+    my_communities = conn.execute('''
+        SELECT c.* FROM communities c
+        JOIN community_members cm ON c.id = cm.community_id
+        WHERE cm.user_id = ?
+    ''', (session['user_id'],)).fetchall()
     all_communities = conn.execute('SELECT * FROM communities ORDER BY created_at DESC').fetchall()
     conn.close()
     return jsonify({
@@ -742,7 +741,6 @@ def create_community():
         (name, description, session['user_id'], datetime.now().isoformat())
     )
     community_id = cursor.lastrowid
-    # Создатель автоматически становится участником
     cursor.execute(
         'INSERT INTO community_members (community_id, user_id, joined_at) VALUES (?, ?, ?)',
         (community_id, session['user_id'], datetime.now().isoformat())
@@ -804,32 +802,3 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
-
-# ===== ЛЕНТА =====
-
-def get_feed_posts(user_id):
-    conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN communities c ON p.community_id = c.id
-        WHERE (
-            p.user_id = ?
-            OR p.user_id IN (SELECT friend_id FROM friends WHERE user_id = ? AND status = 'accepted')
-            OR p.user_id IN (SELECT user_id FROM friends WHERE friend_id = ? AND status = 'accepted')
-            OR p.community_id IN (SELECT community_id FROM community_members WHERE user_id = ?)
-        )
-        ORDER BY p.created_at DESC
-    ''', (user_id, user_id, user_id, user_id))
-    result = posts.fetchall()
-    conn.close()
-    return result
-
-def get_feed():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    posts = get_feed_posts(session['user_id'])
-    return jsonify([dict(p) for p in posts])
