@@ -150,6 +150,7 @@ function switchTab(tabId) {
   }
   if (tabId === 'friends') {
     loadFriends();
+    loadFriendRequests();
   }
 }
 
@@ -340,23 +341,6 @@ function loadFriends() {
     .catch(err => console.error('Ошибка загрузки друзей:', err));
 }
 
-function openChatWith(username) {
-  fetch('/api/create_chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: username })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.chat_id) {
-      window.location.href = '/chat/' + data.chat_id;
-    } else {
-      alert('Ошибка создания чата');
-    }
-  })
-  .catch(err => alert('Ошибка: ' + err));
-}
-
 function loadFriendRequests() {
   fetch('/api/friend_requests')
     .then(res => res.json())
@@ -385,86 +369,85 @@ function loadFriendRequests() {
         `;
       }).join('');
     })
-    .catch(err => console.error('Ошибка:', err));
+    .catch(err => console.error('Ошибка загрузки заявок:', err));
 }
 
 function switchFriendTab(tab) {
   document.querySelectorAll('.friend-tab').forEach(el => el.classList.remove('active'));
   document.querySelector(`.friend-tab[data-ftab="${tab}"]`).classList.add('active');
-  document.getElementById('friendRequests').style.display = 'none';
-  document.getElementById('friendsList').style.display = 'block';
-  if (tab === 'list') loadFriends();
-  else if (tab === 'incoming') {
+  if (tab === 'list') {
+    document.getElementById('friendsList').style.display = 'block';
+    document.getElementById('friendRequests').style.display = 'none';
+    loadFriends();
+  } else {
     document.getElementById('friendsList').style.display = 'none';
     document.getElementById('friendRequests').style.display = 'block';
     loadFriendRequests();
-  } else if (tab === 'outgoing') {
-    showToast('📤 Исходящие заявки (в разработке)');
-  } else if (tab === 'blocked') loadBlockedUsers();
+  }
 }
 
-function loadBlockedUsers() {
-  fetch('/api/blocked')
+function searchUsers(query) {
+  const resultsContainer = document.getElementById('searchResults');
+  if (query.length < 2) {
+    resultsContainer.style.display = 'none';
+    return;
+  }
+  fetch(`/api/users?search=${encodeURIComponent(query)}`)
     .then(res => res.json())
-    .then(blocked => {
-      const container = document.getElementById('friendsList');
-      document.getElementById('friendsList').style.display = 'block';
-      document.getElementById('friendRequests').style.display = 'none';
-      if (!blocked || blocked.length === 0) {
-        container.innerHTML = '<div class="empty-state">Нет заблокированных</div>';
+    .then(users => {
+      if (!users || users.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-empty">Пользователи не найдены</div>';
+        resultsContainer.style.display = 'block';
         return;
       }
-      container.innerHTML = blocked.map(u => {
-        const avatarHtml = u.avatar && u.avatar.startsWith('/static/uploads/')
-          ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-          : (u.avatar || '👤');
-        return `
-          <div class="friend-item">
-            <div class="friend-avatar">${avatarHtml}</div>
-            <div class="friend-info">
-              <div class="friend-name">${u.full_name || u.username}</div>
-              <div class="friend-username">@${u.username}</div>
-            </div>
-            <div class="friend-actions">
-              <button class="btn-sm" style="background:rgba(74,222,128,0.1);color:#4ade80;" onclick="unblockUser(${u.id})">
-                <i class="fas fa-check"></i> Разблокировать
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
+      resultsContainer.innerHTML = users.map(u => `
+        <div class="search-result">
+          <span>${u.full_name || u.username} (@${u.username})</span>
+          <button class="btn-sm" onclick="sendFriendRequest('${u.username}')">➕</button>
+        </div>
+      `).join('');
+      resultsContainer.style.display = 'block';
     })
-    .catch(err => console.error('Ошибка:', err));
+    .catch(err => console.error('Ошибка поиска:', err));
 }
 
-function searchFriends(query) {
-  const items = document.querySelectorAll('.friend-item');
-  items.forEach(item => {
-    const text = item.textContent.toLowerCase();
-    item.style.display = text.includes(query.toLowerCase()) ? 'flex' : 'none';
-  });
-}
-
-function addFriend() {
-  const username = prompt('Введите имя пользователя:');
-  if (!username || !username.trim()) return;
+function sendFriendRequest(username) {
   fetch('/api/friends', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: username.trim() })
+    body: JSON.stringify({ username: username })
   })
   .then(res => res.json())
   .then(data => {
     if (data.success) {
       showToast('✅ Заявка отправлена!');
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('searchUsers').value = '';
     } else {
       showToast('❌ ' + (data.error || 'Ошибка'));
     }
   })
   .catch(err => {
     console.error('Ошибка:', err);
-    showToast('❌ Ошибка отправки');
+    showToast('❌ Ошибка отправки заявки');
   });
+}
+
+function openChatWith(username) {
+  fetch('/api/create_chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.chat_id) {
+      window.location.href = '/chat/' + data.chat_id;
+    } else {
+      alert('Ошибка создания чата');
+    }
+  })
+  .catch(err => alert('Ошибка: ' + err));
 }
 
 function acceptFriend(requestId) {
@@ -492,6 +475,12 @@ function rejectFriend(requestId) {
     .catch(err => console.error('Ошибка:', err));
 }
 
+function addFriend() {
+  const username = prompt('Введите имя пользователя:');
+  if (!username || !username.trim()) return;
+  sendFriendRequest(username.trim());
+}
+
 function blockUser(userId) {
   if (!confirm('Заблокировать пользователя?')) return;
   fetch(`/api/block/${userId}`, { method: 'POST' })
@@ -515,6 +504,38 @@ function unblockUser(userId) {
       }
     })
     .catch(err => console.error('Ошибка:', err));
+}
+
+function loadBlockedUsers() {
+  fetch('/api/blocked')
+    .then(res => res.json())
+    .then(blocked => {
+      const container = document.getElementById('friendsList');
+      if (!blocked || blocked.length === 0) {
+        container.innerHTML = '<div class="empty-state">Нет заблокированных</div>';
+        return;
+      }
+      container.innerHTML = blocked.map(u => {
+        const avatarHtml = u.avatar && u.avatar.startsWith('/static/uploads/')
+          ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : (u.avatar || '👤');
+        return `
+          <div class="friend-item">
+            <div class="friend-avatar">${avatarHtml}</div>
+            <div class="friend-info">
+              <div class="friend-name">${u.full_name || u.username}</div>
+              <div class="friend-username">@${u.username}</div>
+            </div>
+            <div class="friend-actions">
+              <button class="btn-sm" style="background:rgba(74,222,128,0.1);color:#4ade80;" onclick="unblockUser(${u.id})">
+                <i class="fas fa-check"></i> Разблокировать
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .catch(err => console.error('Ошибка загрузки заблокированных:', err));
 }
 
 function saveSetting(field, value) {
