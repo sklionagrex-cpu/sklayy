@@ -135,27 +135,6 @@ def get_user_by_username(username):
     conn.close()
     return user
 
-def get_feed_posts(user_id):
-    conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN communities c ON p.community_id = c.id
-        WHERE (
-            p.user_id = ?
-            OR p.user_id IN (SELECT friend_id FROM friends WHERE user_id = ? AND status = 'accepted')
-            OR p.user_id IN (SELECT user_id FROM friends WHERE friend_id = ? AND status = 'accepted')
-            OR p.community_id IN (SELECT community_id FROM community_members WHERE user_id = ?)
-        )
-        ORDER BY p.created_at DESC
-    ''', (user_id, user_id, user_id, user_id))
-    result = posts.fetchall()
-    conn.close()
-    return result
-
 # ===== МАРШРУТЫ =====
 @app.route('/')
 def index():
@@ -861,3 +840,25 @@ def delete_comment(comment_id):
     conn.commit()
     conn.close()
     return jsonify({'success': True})
+
+def get_feed_posts(user_id):
+    conn = get_db()
+    posts = conn.execute('''
+        SELECT p.*, u.username, u.full_name, u.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
+               c.name as community_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        ORDER BY p.created_at DESC
+    ''')
+    result = posts.fetchall()
+    conn.close()
+    return result
+
+@app.route('/api/feed')
+def get_feed():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    posts = get_feed_posts(session['user_id'])
+    return jsonify([dict(p) for p in posts])
