@@ -656,7 +656,7 @@ def handle_send_message(data):
 
 @socketio.on('join_chat')
 def handle_join_chat(data):
-    join_room(f'chat_{data.get("chat_id")}')')
+    join_room(f'chat_{data.get("chat_id")}')
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
