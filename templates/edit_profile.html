@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <style>
-    body { background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; padding: 16px; }
-    .edit-container { max-width: 500px; margin: 0 auto; }
+    body { background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; padding: 16px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .edit-container { max-width: 500px; width: 100%; margin: 0 auto; }
     .back-btn { color: #f0f0f5; text-decoration: none; font-size: 24px; display: inline-block; margin-bottom: 20px; }
     .edit-card { background: rgba(255,255,255,0.03); border-radius: 24px; padding: 24px; border: 1px solid rgba(255,255,255,0.06); }
     .avatar-section { text-align: center; margin-bottom: 24px; }
@@ -18,7 +18,7 @@
     .avatar-edit { background: #5B6CFF; border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; box-shadow: 0 0 20px rgba(91,108,255,0.3); transition: all 0.3s; }
     .avatar-edit:hover { transform: scale(1.1); }
     .edit-row { margin-bottom: 16px; }
-    .edit-row label { display: block; color: #888; font-size: 13px; margin-bottom: 4px; }
+    .edit-row label { display: block; color: #888; font-size: 13px; margin-bottom: 4px; font-weight: 500; }
     .edit-row input, .edit-row textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #f0f0f5; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: all 0.3s; }
     .edit-row input:focus, .edit-row textarea:focus { border-color: #5B6CFF; background: rgba(255,255,255,0.08); }
     .edit-row textarea { resize: vertical; min-height: 80px; }

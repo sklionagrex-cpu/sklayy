@@ -409,3 +409,78 @@ body { font-family: 'Inter', sans-serif; background: #0b0b0f; color: #f0f0f5; he
   font-size: 12px;
   font-weight: 500;
 }
+
+/* ===== КНОПКИ В ПОСТАХ ===== */
+.like-btn, .comment-btn {
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: #f0f0f5;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.like-btn:hover {
+  background: rgba(91,108,255,0.15);
+  color: #5B6CFF;
+}
+.comment-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+.like-btn.liked {
+  color: #ff6b6b;
+  background: rgba(255,70,70,0.1);
+}
+.post-actions .btn-sm {
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: #f0f0f5;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.post-actions .btn-sm.like-btn:hover {
+  background: rgba(91,108,255,0.15);
+  color: #5B6CFF;
+}
+.post-actions .btn-sm.delete-btn:hover {
+  background: rgba(255,70,70,0.1);
+  color: #ff6b6b;
+}
+
+/* ===== БЕЙДЖ ЗАЯВОК ===== */
+.friend-tab-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.friend-tab-wrapper .friend-tab {
+  padding-right: 8px;
+}
+.request-badge {
+  display: none;
+  background: #ff6b6b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 30px;
+  margin-left: 6px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1.4;
+}
+.request-badge.show {
+  display: inline-block;
+}
