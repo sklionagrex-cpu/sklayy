@@ -148,6 +148,9 @@ function switchTab(tabId) {
   if (tabId === 'posts') {
     loadPosts();
   }
+  if (tabId === 'friends') {
+    loadFriends();
+  }
 }
 
 function toggleEditMode() {
@@ -173,7 +176,6 @@ function saveProfile() {
   .then(res => res.json())
   .then(() => {
     showToast('✅ Профиль обновлён!');
-    // Перенаправляем в мессенджер на вкладку профиля
     window.location.href = '/app?tab=profile';
   })
   .catch(err => {
@@ -198,31 +200,33 @@ function closePostModal() {
 }
 
 function publishPost() {
-  const content = document.getElementById("postContent").value.trim();
+  const content = document.getElementById('postContent').value.trim();
   if (!content && !mediaUrl) {
-    showToast("❌ Введите текст или прикрепите медиа");
+    showToast('❌ Введите текст или прикрепите медиа');
     return;
   }
+  
   const data = { content: content };
   if (mediaUrl) data.media_url = mediaUrl;
-  fetch("/api/posts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  
+  fetch('/api/posts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      showToast("✅ Пост опубликован!");
+      showToast('✅ Пост опубликован!');
       closePostModal();
-      window.location.href = "/app?feed=updated";
+      window.location.href = '/app?feed=updated';
     } else {
-      showToast("❌ " + (data.error || "Ошибка"));
+      showToast('❌ ' + (data.error || 'Ошибка'));
     }
   })
   .catch(err => {
-    console.error("Ошибка:", err);
-    showToast("❌ Ошибка публикации");
+    console.error('Ошибка:', err);
+    showToast('❌ Ошибка публикации');
   });
 }
 
@@ -314,23 +318,43 @@ function loadFriends() {
         container.innerHTML = '<div class="empty-state">У вас пока нет друзей</div>';
         return;
       }
-      container.innerHTML = friends.map(f => `
-        <div class="friend-item">
-          <div class="friend-avatar">${f.avatar || '👤'}</div>
-          <div class="friend-info">
-            <div class="friend-name">${f.full_name || f.username}</div>
-            <div class="friend-username">@${f.username}</div>
-          </div>
-          <div class="friend-status">${f.online ? '🟢 Онлайн' : '⚪ Офлайн'}</div>
-          <div class="friend-actions">
-            <button class="btn-sm" style="background:rgba(255,70,70,0.1);color:#ff6b6b;" onclick="blockUser(${f.id})">
-              <i class="fas fa-ban"></i>
+      container.innerHTML = friends.map(f => {
+        const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
+          ? `<img src="${f.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : (f.avatar || '👤');
+        return `
+          <div class="friend-item">
+            <div class="friend-avatar">${avatarHtml}</div>
+            <div class="friend-info">
+              <div class="friend-name">${f.full_name || f.username}</div>
+              <div class="friend-username">@${f.username}</div>
+            </div>
+            <div class="friend-status">${f.online ? '🟢 Онлайн' : '⚪ Офлайн'}</div>
+            <button class="chat-btn" onclick="openChatWith('${f.username}')" title="Написать">
+              <i class="fas fa-comment"></i>
             </button>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     })
-    .catch(err => console.error('Ошибка:', err));
+    .catch(err => console.error('Ошибка загрузки друзей:', err));
+}
+
+function openChatWith(username) {
+  fetch('/api/create_chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.chat_id) {
+      window.location.href = '/chat/' + data.chat_id;
+    } else {
+      alert('Ошибка создания чата');
+    }
+  })
+  .catch(err => alert('Ошибка: ' + err));
 }
 
 function loadFriendRequests() {
@@ -342,19 +366,24 @@ function loadFriendRequests() {
         container.innerHTML = '<div class="empty-state">Нет входящих заявок</div>';
         return;
       }
-      container.innerHTML = requests.map(req => `
-        <div class="friend-item">
-          <div class="friend-avatar">${req.avatar || '👤'}</div>
-          <div class="friend-info">
-            <div class="friend-name">${req.full_name || req.username}</div>
-            <div class="friend-username">@${req.username}</div>
+      container.innerHTML = requests.map(req => {
+        const avatarHtml = req.avatar && req.avatar.startsWith('/static/uploads/')
+          ? `<img src="${req.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : (req.avatar || '👤');
+        return `
+          <div class="friend-item">
+            <div class="friend-avatar">${avatarHtml}</div>
+            <div class="friend-info">
+              <div class="friend-name">${req.full_name || req.username}</div>
+              <div class="friend-username">@${req.username}</div>
+            </div>
+            <div class="friend-actions">
+              <button class="btn-sm accept" onclick="acceptFriend(${req.request_id})">✓</button>
+              <button class="btn-sm reject" onclick="rejectFriend(${req.request_id})">✕</button>
+            </div>
           </div>
-          <div class="friend-actions">
-            <button class="btn-sm accept" onclick="acceptFriend(${req.request_id})">✓</button>
-            <button class="btn-sm reject" onclick="rejectFriend(${req.request_id})">✕</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     })
     .catch(err => console.error('Ошибка:', err));
 }
@@ -385,20 +414,25 @@ function loadBlockedUsers() {
         container.innerHTML = '<div class="empty-state">Нет заблокированных</div>';
         return;
       }
-      container.innerHTML = blocked.map(u => `
-        <div class="friend-item">
-          <div class="friend-avatar">${u.avatar || '👤'}</div>
-          <div class="friend-info">
-            <div class="friend-name">${u.full_name || u.username}</div>
-            <div class="friend-username">@${u.username}</div>
+      container.innerHTML = blocked.map(u => {
+        const avatarHtml = u.avatar && u.avatar.startsWith('/static/uploads/')
+          ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : (u.avatar || '👤');
+        return `
+          <div class="friend-item">
+            <div class="friend-avatar">${avatarHtml}</div>
+            <div class="friend-info">
+              <div class="friend-name">${u.full_name || u.username}</div>
+              <div class="friend-username">@${u.username}</div>
+            </div>
+            <div class="friend-actions">
+              <button class="btn-sm" style="background:rgba(74,222,128,0.1);color:#4ade80;" onclick="unblockUser(${u.id})">
+                <i class="fas fa-check"></i> Разблокировать
+              </button>
+            </div>
           </div>
-          <div class="friend-actions">
-            <button class="btn-sm" style="background:rgba(74,222,128,0.1);color:#4ade80;" onclick="unblockUser(${u.id})">
-              <i class="fas fa-check"></i> Разблокировать
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     })
     .catch(err => console.error('Ошибка:', err));
 }
