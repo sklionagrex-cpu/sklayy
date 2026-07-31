@@ -13,7 +13,6 @@ function initApp() {
   loadFeed();
   loadCommunities();
 
-  // Проверяем параметр feed=updated
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('feed') === 'updated') {
     setTimeout(() => {
@@ -24,7 +23,6 @@ function initApp() {
     }, 500);
   }
 
-  // Обновление профиля через postMessage
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'profile_updated') {
       const user = event.data.user;
@@ -37,7 +35,6 @@ function initApp() {
     }
   });
 
-  // Обновление ленты при переходе на панель
   const feedPanel = document.getElementById('panel-feed');
   const feedObserver = new MutationObserver(() => {
     if (feedPanel.classList.contains('active')) {
@@ -55,22 +52,25 @@ function loadFeed() {
       const container = document.getElementById('feedList');
       if (!container) return;
       if (!posts || posts.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Создайте первый пост или вступите в сообщество</div></div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Создайте первый пост</div></div>';
         return;
       }
       container.innerHTML = posts.map(post => {
+        const avatarHtml = post.avatar && post.avatar.startsWith('/static/uploads/')
+          ? `<img src="${post.avatar}" alt="Avatar">`
+          : (post.avatar || '👤');
         let mediaHtml = '';
         if (post.media_url) {
           if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-            mediaHtml = `<video controls style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;"><source src="${post.media_url}" type="video/mp4"></video>`;
+            mediaHtml = `<div class="feed-media"><video controls><source src="${post.media_url}" type="video/mp4"></video></div>`;
           } else {
-            mediaHtml = `<img src="${post.media_url}" style="max-width:100%;max-height:300px;border-radius:12px;margin-top:8px;" alt="Изображение">`;
+            mediaHtml = `<div class="feed-media"><img src="${post.media_url}" alt="Изображение"></div>`;
           }
         }
         return `
           <div class="feed-item">
             <div class="feed-header">
-              <div class="feed-avatar">${post.avatar || '👤'}</div>
+              <div class="feed-avatar">${avatarHtml}</div>
               <div class="feed-author-info">
                 <div class="feed-author-name">${post.full_name || post.username}</div>
                 <div class="feed-author-username">@${post.username}</div>
@@ -93,9 +93,7 @@ function loadFeed() {
 function likePostFeed(postId) {
   fetch(`/api/posts/${postId}/like`, { method: 'POST' })
     .then(res => res.json())
-    .then(data => {
-      if (data.success) loadFeed();
-    })
+    .then(data => { if (data.success) loadFeed(); })
     .catch(err => console.error('Ошибка:', err));
 }
 
@@ -226,9 +224,9 @@ function loadPanelPosts() {
         let mediaHtml = '';
         if (post.media_url) {
           if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-            mediaHtml = `<video controls style="max-width:100%;max-height:400px;border-radius:12px;margin-top:8px;"><source src="${post.media_url}" type="video/mp4"></video>`;
+            mediaHtml = `<div class="post-media"><video controls><source src="${post.media_url}" type="video/mp4"></video></div>`;
           } else {
-            mediaHtml = `<img src="${post.media_url}" style="max-width:100%;max-height:400px;border-radius:12px;margin-top:8px;" alt="Изображение">`;
+            mediaHtml = `<div class="post-media"><img src="${post.media_url}" alt="Изображение"></div>`;
           }
         }
         return `
@@ -270,7 +268,7 @@ function loadChats() {
     .then(chats => {
       const container = document.getElementById('chatList');
       if (!chats || chats.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение — напишите кому-нибудь первым</div></div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
         return;
       }
       container.innerHTML = chats.map(chat => `
@@ -359,7 +357,6 @@ dockItems.forEach(item => {
   });
 });
 
-// ===== ЗАСТАВКА =====
 const splashShown = sessionStorage.getItem('splash_shown');
 if (splashShown) {
   splash.style.display = 'none';
