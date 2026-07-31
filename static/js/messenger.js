@@ -38,6 +38,7 @@ function initApp() {
     }
   });
 }
+
 function loadFeed() {
   fetch('/api/feed')
     .then(res => res.json())
@@ -172,6 +173,7 @@ function leaveCommunity(communityId) {
   if (!confirm('Покинуть сообщество?')) return;
   alert('Функция в разработке');
 }
+
 function updateProfilePanel(user) {
   currentUser = user;
   document.getElementById('panelName').textContent = user.full_name || user.username;
@@ -194,7 +196,6 @@ function updateAvatar(url) {
 }
 
 function loadProfileData() {
-  loadInfo();
   fetch('/api/profile')
     .then(res => res.json())
     .then(user => {
@@ -278,7 +279,6 @@ function deletePostInProfile(postId) {
 }
 
 function switchProfileSubTab(tab) {
-  if (tab === "info") { loadInfo(); }
   document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
   document.querySelector(`.sub-tab[data-subtab="${tab}"]`).classList.add('active');
@@ -370,6 +370,7 @@ function publishPost() {
   })
   .catch(err => console.error('Ошибка:', err));
 }
+
 function loadFriends() {
   fetch('/api/friends')
     .then(res => res.json())
@@ -590,6 +591,7 @@ function openChatOrCreate(chatId, username) {
     .catch(err => alert('Ошибка: ' + err));
   }
 }
+
 function connectSocket() {
   socket = io();
   socket.on('connect', () => console.log('✅ WebSocket подключен'));
@@ -599,50 +601,33 @@ function connectSocket() {
 }
 
 function loadChats() {
-  fetch("/api/chats")
+  fetch('/api/chats')
     .then(res => res.json())
     .then(chats => {
-      const container = document.getElementById("chatList");
+      const container = document.getElementById('chatList');
       if (!chats || chats.length === 0) {
         container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
         return;
       }
-      const privateChats = chats.filter(c => c.type === "private");
-      const groupChats = chats.filter(c => c.type === "group");
-      let html = "";
+      const privateChats = chats.filter(c => c.type === 'private');
+      const groupChats = chats.filter(c => c.type === 'group');
+      let html = '';
       if (privateChats.length > 0) {
         html += `<div class="section-label">👤 Личные чаты</div>`;
         html += privateChats.map(chat => `
           <div class="chat-item" onclick="openChat(${chat.id})">
             <div class="chat-avatar">👤</div>
             <div class="chat-info">
-              <div class="chat-name">${chat.name || "Личный чат"}</div>
+              <div class="chat-name">${chat.name || 'Личный чат'}</div>
               <div class="chat-preview">${chat.member_count || 0} участников</div>
             </div>
             <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
           </div>
-        `).join("");
+        `).join('');
       }
       if (groupChats.length > 0) {
         html += `<div class="section-label">👥 Групповые чаты</div>`;
         html += groupChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
-            <div class="chat-avatar">👥</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || "Групповой чат"}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join("");
-      }
-      container.innerHTML = html || `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-    })
-    .catch(err => console.error("Ошибка загрузки чатов:", err));
-}
-      container.innerHTML = `
-        <div class="section-label">💬 Групповые чаты</div>
-        ${chats.filter(c => c.type === 'group').map(chat => `
           <div class="chat-item" onclick="openChat(${chat.id})">
             <div class="chat-avatar">👥</div>
             <div class="chat-info">
@@ -651,8 +636,9 @@ function loadChats() {
             </div>
             <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
           </div>
-        `).join('')}
-      `;
+        `).join('');
+      }
+      container.innerHTML = html || `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
     })
     .catch(err => console.error('Ошибка загрузки чатов:', err));
 }
@@ -730,58 +716,4 @@ if (splashShown) {
       }, 600);
     }
   }, 1200);
-}
-function loadInfo() {
-  fetch('/api/profile')
-    .then(res => res.json())
-    .then(user => {
-      document.getElementById('panelFullName').textContent = user.full_name || user.username;
-      document.getElementById('panelStatusFull').textContent = user.status || 'Не установлен';
-      document.getElementById('panelBioFull').textContent = user.bio || 'Не указано';
-      document.getElementById('panelCreatedAt').textContent = user.created_at ? user.created_at.slice(0,10) : '—';
-    })
-    .catch(err => console.error('Ошибка загрузки информации:', err));
-}
-
-function loadChats() {
-  fetch('/api/chats')
-    .then(res => res.json())
-    .then(chats => {
-      const container = document.getElementById('chatList');
-      if (!chats || chats.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-        return;
-      }
-      const privateChats = chats.filter(c => c.type === 'private');
-      const groupChats = chats.filter(c => c.type === 'group');
-      let html = '';
-      if (privateChats.length > 0) {
-        html += `<div class="section-label">👤 Личные чаты</div>`;
-        html += privateChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
-            <div class="chat-avatar">👤</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || 'Личный чат'}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join('');
-      }
-      if (groupChats.length > 0) {
-        html += `<div class="section-label">👥 Групповые чаты</div>`;
-        html += groupChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
-            <div class="chat-avatar">👥</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || 'Групповой чат'}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join('');
-      }
-      container.innerHTML = html || `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-    })
-    .catch(err => console.error('Ошибка загрузки чатов:', err));
 }
