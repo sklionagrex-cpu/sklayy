@@ -1,4 +1,3 @@
-import shutil
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit, join_room
 import sqlite3
@@ -12,15 +11,8 @@ app.secret_key = 'sklay_secret'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# ===== БЭКАП БАЗЫ =====
 DB_PATH = 'sklay.db'
-BACKUP_DIR = "backups"
-os.makedirs(BACKUP_DIR, exist_ok=True)
-if os.path.exists(DB_PATH):
-    shutil.copy2(DB_PATH, os.path.join(BACKUP_DIR, f"backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db"))
-else:
-    backups = sorted([f for f in os.listdir(BACKUP_DIR) if f.endswith(".db")], reverse=True)
-    if backups:
-        shutil.copy2(os.path.join(BACKUP_DIR, backups[0]), DB_PATH)
 BACKUP_DIR = 'backups'
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
@@ -31,6 +23,7 @@ else:
     if backups:
         shutil.copy2(os.path.join(BACKUP_DIR, backups[0]), DB_PATH)
 
+# ===== БАЗА ДАННЫХ =====
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -71,13 +64,27 @@ def get_user_by_username(username):
     conn.close()
     return user
 
+def get_feed_posts(user_id):
+    conn = get_db()
+    posts = conn.execute('''
+        SELECT p.*, u.username, u.full_name, u.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
+               c.name as community_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        ORDER BY p.created_at DESC
+    ''').fetchall()
+    conn.close()
+    return posts
+
 def is_community_admin(community_id, user_id):
     conn = get_db()
     admin = conn.execute('SELECT * FROM community_members WHERE community_id = ? AND user_id = ? AND role = "admin"', (community_id, user_id)).fetchone()
     conn.close()
     return admin is not None
 
-
+# ===== МАРШРУТЫ =====
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -162,6 +169,7 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+# ===== API =====
 @app.route('/api/profile')
 def get_profile():
     if 'user_id' not in session:
@@ -350,6 +358,7 @@ def reject_friend(request_id):
     conn.close()
     return jsonify({'success': True})
 
+# ===== ПОСТЫ =====
 @app.route('/api/posts')
 def get_posts():
     if 'user_id' not in session:
@@ -404,6 +413,7 @@ def delete_post(post_id):
     conn.close()
     return jsonify({'success': True})
 
+# ===== КОММЕНТАРИИ =====
 @app.route('/api/posts/<int:post_id>/comments')
 def get_comments(post_id):
     if 'user_id' not in session:
@@ -445,6 +455,7 @@ def delete_comment(comment_id):
     conn.close()
     return jsonify({'success': True})
 
+# ===== ЛЕНТА =====
 @app.route('/api/feed')
 def get_feed():
     if 'user_id' not in session:
@@ -452,6 +463,7 @@ def get_feed():
     posts = get_feed_posts(session['user_id'])
     return jsonify([dict(p) for p in posts])
 
+# ===== СООБЩЕСТВА =====
 @app.route('/api/communities')
 def get_communities():
     if 'user_id' not in session:
@@ -564,6 +576,7 @@ def update_community_avatar(community_id):
     conn.close()
     return jsonify({'url': url})
 
+# ===== WEBSOCKET =====
 @socketio.on('send_message')
 def handle_send_message(data):
     chat_id = data.get('chat_id')
@@ -589,17 +602,3 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
-
-def get_feed_posts(user_id):
-    conn = get_db()
-    posts = conn.execute('''
-        SELECT p.*, u.username, u.full_name, u.avatar,
-               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
-               c.name as community_name
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN communities c ON p.community_id = c.id
-        ORDER BY p.created_at DESC
-    ''').fetchall()
-    conn.close()
-    return posts
