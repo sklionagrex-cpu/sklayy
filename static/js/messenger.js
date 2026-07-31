@@ -45,21 +45,21 @@ function initApp() {
 }
 
 function loadFeed() {
-  console.log('📡 Загрузка ленты...');
-  fetch('/api/feed')
+  console.log("📡 Загрузка ленты...");
+  fetch("/api/feed")
     .then(res => res.json())
     .then(posts => {
-      const container = document.getElementById('feedList');
+      const container = document.getElementById("feedList");
       if (!container) return;
       if (!posts || posts.length === 0) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Создайте первый пост</div></div>';
         return;
       }
       container.innerHTML = posts.map(post => {
-        const avatarHtml = post.avatar && post.avatar.startsWith('/static/uploads/')
+        const avatarHtml = post.avatar && post.avatar.startsWith("/static/uploads/")
           ? `<img src="${post.avatar}" alt="Avatar">`
-          : (post.avatar || '👤');
-        let mediaHtml = '';
+          : (post.avatar || "👤");
+        let mediaHtml = "";
         if (post.media_url) {
           if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
             mediaHtml = `<div class="feed-media"><video controls><source src="${post.media_url}" type="video/mp4"></video></div>`;
@@ -75,19 +75,19 @@ function loadFeed() {
                 <div class="feed-author-name">${post.full_name || post.username}</div>
                 <div class="feed-author-username">@${post.username}</div>
               </div>
-              <div class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
+              <div class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ""}</div>
             </div>
             <div class="feed-content">${post.content}</div>
             ${mediaHtml}
             <div class="feed-actions">
               <button onclick="likePostFeed(${post.id})">❤️ ${post.likes || 0}</button>
-              <button onclick="window.location.href='/post/${post.id}'">💬</button>
+              <button onclick="window.location.href='/post/${post.id}'">💬 ${post.comments_count || 0}</button>
             </div>
           </div>
         `;
-      }).join('');
+      }).join("");
     })
-    .catch(err => console.error('Ошибка загрузки ленты:', err));
+    .catch(err => console.error("Ошибка загрузки ленты:", err));
 }
 
 function likePostFeed(postId) {
