@@ -599,3 +599,19 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+# ===== ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЛЕНТЫ С КОЛИЧЕСТВОМ КОММЕНТАРИЕВ =====
+def get_feed_posts(user_id):
+    conn = get_db()
+    posts = conn.execute('''
+        SELECT p.*, u.username, u.full_name, u.avatar,
+               (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
+               (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comments_count,
+               c.name as community_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        ORDER BY p.created_at DESC
+    ''').fetchall()
+    conn.close()
+    return posts
