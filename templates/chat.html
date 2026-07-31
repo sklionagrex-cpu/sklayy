@@ -55,7 +55,6 @@
         .then(res => res.json())
         .then(user => {
           currentUser = user;
-          // Получаем информацию о собеседнике
           fetch(`/api/chat_users/${chatId}`)
             .then(res => res.json())
             .then(data => {
