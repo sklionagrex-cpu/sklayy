@@ -86,6 +86,13 @@
     </div>
 
     <div class="tab-content" id="tab-friends">
+      <div class="friends-header">
+        <div class="search-add-wrapper">
+          <input type="text" id="searchUsers" placeholder="Поиск пользователей..." oninput="searchUsers(this.value)">
+          <button class="btn-primary" onclick="addFriend()"><i class="fas fa-user-plus"></i> Добавить</button>
+        </div>
+        <div id="searchResults" class="search-results" style="display:none;"></div>
+      </div>
       <div id="friendsList" class="friends-list">
         <div class="empty-state">У вас пока нет друзей</div>
       </div>
