@@ -616,3 +616,20 @@ if __name__ == '__main__':
 
 # ===== ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЛЕНТЫ С КОЛИЧЕСТВОМ КОММЕНТАРИЕВ =====
 
+
+@app.route('/api/chat_users/<int:chat_id>')
+def get_chat_users(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    # Получаем всех участников чата, кроме текущего пользователя
+    users = conn.execute('''
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online
+        FROM chat_members cm
+        JOIN users u ON cm.user_id = u.id
+        WHERE cm.chat_id = ? AND u.id != ?
+    ''', (chat_id, session['user_id'])).fetchall()
+    conn.close()
+    if users:
+        return jsonify(dict(users[0]))
+    return jsonify({'error': 'No users found'}), 404
