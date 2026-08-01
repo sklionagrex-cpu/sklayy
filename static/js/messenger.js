@@ -7,6 +7,8 @@ let currentUser = {};
 let mediaUrl = null;
 let currentFeedIndex = 0;
 let feedPosts = [];
+let touchStartY = 0;
+let touchEndY = 0;
 
 function initApp() {
   connectSocket();
@@ -39,6 +41,20 @@ function initApp() {
     }
   });
 
+  // Свайп для смены постов
+  const feedContainer = document.getElementById('feedList');
+  if (feedContainer) {
+    feedContainer.addEventListener('touchstart', function(e) {
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+    
+    feedContainer.addEventListener('touchend', function(e) {
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipe();
+    }, { passive: true });
+  }
+
+  // Клавиши для навигации
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' && currentFeedIndex > 0) {
       e.preventDefault();
@@ -48,6 +64,23 @@ function initApp() {
       renderFeedPost(currentFeedIndex + 1);
     }
   });
+}
+
+function handleSwipe() {
+  const swipeDistance = touchStartY - touchEndY;
+  if (Math.abs(swipeDistance) < 50) return;
+  
+  if (swipeDistance > 0) {
+    // Свайп вверх - следующий пост
+    if (currentFeedIndex < feedPosts.length - 1) {
+      renderFeedPost(currentFeedIndex + 1);
+    }
+  } else {
+    // Свайп вниз - предыдущий пост
+    if (currentFeedIndex > 0) {
+      renderFeedPost(currentFeedIndex - 1);
+    }
+  }
 }
 
 function loadFeed() {
@@ -86,7 +119,6 @@ function renderFeedPost(index) {
     contentHtml = `
       <div class="feed-text-content">
         <div class="feed-text-author">${post.full_name || post.username}</div>
-        <div class="feed-text-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
         <div class="feed-text-body">${post.content}</div>
       </div>
     `;
@@ -104,16 +136,18 @@ function renderFeedPost(index) {
             <div class="feed-media-inner">
               ${contentHtml}
             </div>
-            <div class="feed-overlay">
-              <div class="feed-user">
-                <div class="feed-user-avatar">${avatarHtml}</div>
-                <div class="feed-user-name">${post.full_name || post.username}</div>
-              </div>
-            </div>
           </div>
         ` : contentHtml}
         
-        <div class="feed-actions-bar ${isMedia ? 'feed-actions-overlay' : 'feed-actions-text'}">
+        <div class="feed-bottom-info">
+          <div class="feed-user-info">
+            <div class="feed-user-avatar">${avatarHtml}</div>
+            <div class="feed-user-name">${post.full_name || post.username}</div>
+          </div>
+          ${isMedia ? `<div class="feed-caption">${post.content || ''}</div>` : ''}
+        </div>
+        
+        <div class="feed-actions-bar feed-actions-overlay">
           <div class="feed-action-btn" onclick="likePostFeed(${post.id})">
             <i class="fas fa-heart"></i>
             <span class="feed-action-count">${post.likes || 0}</span>
