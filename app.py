@@ -641,3 +641,31 @@ def handle_join_chat(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+@app.route('/chat/<int:chat_id>')
+def chat_view(chat_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    chat = conn.execute('SELECT * FROM chats WHERE id = ?', (chat_id,)).fetchone()
+    if not chat:
+        conn.close()
+        return redirect(url_for('messenger'))
+    members = conn.execute('''
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online
+        FROM chat_members cm JOIN users u ON cm.user_id = u.id
+        WHERE cm.chat_id = ?
+    ''', (chat_id,)).fetchall()
+    conn.close()
+    chat_name = chat['name']
+    if chat['type'] == 'private':
+        conn = get_db()
+        other = conn.execute('''
+            SELECT u.full_name, u.username FROM chat_members cm
+            JOIN users u ON cm.user_id = u.id
+            WHERE cm.chat_id = ? AND cm.user_id != ?
+        ''', (chat_id, session['user_id'])).fetchone()
+        conn.close()
+        if other:
+            chat_name = other['full_name'] or other['username']
+    return render_template('chat.html', chat=chat, members=members, username=session.get('username'), chat_name=chat_name)
