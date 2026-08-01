@@ -41,7 +41,6 @@ function initApp() {
     }
   });
 
-  // Свайп для смены постов
   const feedContainer = document.getElementById('feedList');
   if (feedContainer) {
     feedContainer.addEventListener('touchstart', function(e) {
@@ -54,7 +53,6 @@ function initApp() {
     }, { passive: true });
   }
 
-  // Клавиши для навигации
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' && currentFeedIndex > 0) {
       e.preventDefault();
@@ -69,17 +67,10 @@ function initApp() {
 function handleSwipe() {
   const swipeDistance = touchStartY - touchEndY;
   if (Math.abs(swipeDistance) < 50) return;
-  
-  if (swipeDistance > 0) {
-    // Свайп вверх - следующий пост
-    if (currentFeedIndex < feedPosts.length - 1) {
-      renderFeedPost(currentFeedIndex + 1);
-    }
-  } else {
-    // Свайп вниз - предыдущий пост
-    if (currentFeedIndex > 0) {
-      renderFeedPost(currentFeedIndex - 1);
-    }
+  if (swipeDistance > 0 && currentFeedIndex < feedPosts.length - 1) {
+    renderFeedPost(currentFeedIndex + 1);
+  } else if (swipeDistance < 0 && currentFeedIndex > 0) {
+    renderFeedPost(currentFeedIndex - 1);
   }
 }
 
@@ -105,70 +96,88 @@ function renderFeedPost(index) {
   const post = feedPosts[index];
   const container = document.getElementById('feedList');
   
-  let contentHtml = '';
-  let isMedia = false;
-  
-  if (post.media_url) {
-    isMedia = true;
-    if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-      contentHtml = `<video class="feed-video" src="${post.media_url}" autoplay loop muted playsinline></video>`;
-    } else {
-      contentHtml = `<img class="feed-image" src="${post.media_url}" alt="Изображение">`;
-    }
-  } else {
-    contentHtml = `
-      <div class="feed-text-content">
-        <div class="feed-text-author">${post.full_name || post.username}</div>
-        <div class="feed-text-body">${post.content}</div>
-      </div>
-    `;
-  }
-
   const avatarHtml = post.avatar && post.avatar.startsWith('/static/uploads/')
     ? `<img src="${post.avatar}" alt="Avatar">`
     : (post.avatar || '👤');
 
-  container.innerHTML = `
-    <div class="feed-wrapper ${isMedia ? 'feed-media-wrapper' : 'feed-text-wrapper'}">
-      <div class="feed-content">
-        ${isMedia ? `
+  let postHtml = '';
+
+  if (post.media_url) {
+    // Медиа пост - как TikTok
+    let mediaHtml = '';
+    if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
+      mediaHtml = `<video class="feed-video" src="${post.media_url}" autoplay loop muted playsinline></video>`;
+    } else {
+      mediaHtml = `<img class="feed-image" src="${post.media_url}" alt="Изображение">`;
+    }
+
+    postHtml = `
+      <div class="feed-wrapper feed-media-wrapper">
+        <div class="feed-content">
           <div class="feed-media-container">
             <div class="feed-media-inner">
-              ${contentHtml}
+              ${mediaHtml}
             </div>
           </div>
-        ` : contentHtml}
-        
-        <div class="feed-bottom-info">
-          <div class="feed-user-info">
-            <div class="feed-user-avatar">${avatarHtml}</div>
-            <div class="feed-user-name">${post.full_name || post.username}</div>
+          <div class="feed-bottom-info">
+            <div class="feed-user-info">
+              <div class="feed-user-avatar">${avatarHtml}</div>
+              <div class="feed-user-name">${post.full_name || post.username}</div>
+            </div>
+            <div class="feed-caption">${post.content || ''}</div>
           </div>
-          ${isMedia ? `<div class="feed-caption">${post.content || ''}</div>` : ''}
-        </div>
-        
-        <div class="feed-actions-bar feed-actions-overlay">
-          <div class="feed-action-btn" onclick="likePostFeed(${post.id})">
-            <i class="fas fa-heart"></i>
-            <span class="feed-action-count">${post.likes || 0}</span>
-          </div>
-          <div class="feed-action-btn" onclick="window.location.href='/post/${post.id}'">
-            <i class="fas fa-comment"></i>
-            <span class="feed-action-count">${post.comments_count || 0}</span>
-          </div>
-          <div class="feed-action-btn" onclick="sharePost(${post.id})">
-            <i class="fas fa-share"></i>
+          <div class="feed-actions-bar feed-actions-overlay">
+            <div class="feed-action-btn" onclick="likePostFeed(${post.id})">
+              <i class="fas fa-heart"></i>
+              <span class="feed-action-count">${post.likes || 0}</span>
+            </div>
+            <div class="feed-action-btn" onclick="window.location.href='/post/${post.id}'">
+              <i class="fas fa-comment"></i>
+              <span class="feed-action-count">${post.comments_count || 0}</span>
+            </div>
+            <div class="feed-action-btn" onclick="sharePost(${post.id})">
+              <i class="fas fa-share"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="feed-navigation">
-      <div class="feed-dots">
-        ${feedPosts.map((_, i) => `<span class="feed-dot ${i === index ? 'active' : ''}" onclick="goToFeedPost(${i})"></span>`).join('')}
+      <div class="feed-navigation">
+        <div class="feed-dots">
+          ${feedPosts.map((_, i) => `<span class="feed-dot ${i === index ? 'active' : ''}" onclick="goToFeedPost(${i})"></span>`).join('')}
+        </div>
       </div>
-    </div>
-  `;
-  
+    `;
+  } else {
+    // Текстовый пост - как ВК
+    postHtml = `
+      <div class="feed-wrapper feed-text-wrapper">
+        <div class="feed-text-post">
+          <div class="feed-text-header">
+            <div class="feed-text-avatar">${avatarHtml}</div>
+            <div class="feed-text-author-info">
+              <div class="feed-text-author">${post.full_name || post.username}</div>
+              <div class="feed-text-username">@${post.username}</div>
+            </div>
+            <div class="feed-text-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
+          </div>
+          <div class="feed-text-body">${post.content}</div>
+          <div class="feed-text-actions">
+            <button onclick="likePostFeed(${post.id})" class="feed-text-like">
+              ❤️ ${post.likes || 0}
+            </button>
+            <button onclick="window.location.href='/post/${post.id}'" class="feed-text-comment">
+              💬 ${post.comments_count || 0}
+            </button>
+            <button onclick="sharePost(${post.id})" class="feed-text-share">
+              🔗
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = postHtml;
   currentFeedIndex = index;
 }
 
@@ -193,6 +202,8 @@ function likePostFeed(postId) {
     .then(data => { if (data.success) loadFeed(); })
     .catch(err => console.error('Ошибка:', err));
 }
+
+// ===== ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений) =====
 
 function loadCommunities() {
   fetch('/api/communities')
