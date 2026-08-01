@@ -71,6 +71,7 @@
   <script>
     const postId = {{ post_id }};
     const currentUserId = {{ session['user_id'] }};
+    
     function loadPost() {
       fetch('/api/feed')
         .then(res => res.json())
@@ -105,12 +106,14 @@
         })
         .catch(err => console.error('Ошибка загрузки поста:', err));
     }
+    
     function likePost(postId) {
       fetch(`/api/posts/${postId}/like`, { method: 'POST' })
         .then(res => res.json())
         .then(data => { if (data.success) loadPost(); })
         .catch(err => console.error('Ошибка:', err));
     }
+    
     function loadComments() {
       fetch(`/api/posts/${postId}/comments`)
         .then(res => res.json())
@@ -145,24 +148,34 @@
         })
         .catch(err => console.error('Ошибка загрузки комментариев:', err));
     }
+    
     function sendComment() {
       const input = document.getElementById('commentContent');
       const content = input.value.trim();
       if (!content) { alert('Введите текст'); return; }
+      
       fetch(`/api/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: content })
       })
       .then(res => res.json())
-      .then(() => {
-        input.value = '';
-        input.style.height = 'auto';
-        loadComments();
-        setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
+      .then(data => {
+        if (data.id) {
+          input.value = '';
+          input.style.height = 'auto';
+          loadComments();
+          setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
+        } else {
+          alert('Ошибка отправки комментария');
+        }
       })
-      .catch(err => console.error('Ошибка отправки:', err));
+      .catch(err => {
+        console.error('Ошибка отправки:', err);
+        alert('Ошибка отправки комментария');
+      });
     }
+    
     function deleteComment(commentId) {
       if (!confirm('Удалить комментарий?')) return;
       fetch(`/api/comments/${commentId}`, { method: 'DELETE' })
@@ -170,6 +183,7 @@
         .then(data => { if (data.success) loadComments(); })
         .catch(err => console.error('Ошибка удаления:', err));
     }
+    
     document.addEventListener('DOMContentLoaded', () => {
       loadPost();
       loadComments();
