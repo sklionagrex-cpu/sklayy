@@ -2,36 +2,49 @@
 let selectedGroupMembers = [];
 
 function openGroupModal() {
+  console.log('📢 openGroupModal вызвана');
   document.getElementById('groupModal').style.display = 'flex';
   document.getElementById('groupNameInput').value = '';
   selectedGroupMembers = [];
   document.getElementById('selectedMembers').innerHTML = '';
-  loadGroupFriendsList();
+  loadGroupFriendsList(); // <-- ЭТО ВАЖНО!
 }
 
 function loadGroupFriendsList() {
+  console.log('📢 loadGroupFriendsList вызвана');
+  const container = document.getElementById('groupFriendsList');
+  if (!container) {
+    console.error('❌ Контейнер groupFriendsList не найден');
+    return;
+  }
+  
+  container.innerHTML = '<div style="color:#666;padding:12px;text-align:center;">⏳ Загрузка друзей...</div>';
+  
   fetch('/api/friends')
     .then(r => r.json())
     .then(friends => {
-      const container = document.getElementById('groupFriendsList');
+      console.log('📢 Друзья получены:', friends);
       if (!friends || friends.length === 0) {
         container.innerHTML = '<div style="color:#666;padding:12px;text-align:center;">У вас нет друзей</div>';
         return;
       }
       container.innerHTML = friends.map(f => `
-        <div style="padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:10px;display:flex;align-items:center;gap:12px;">
+        <div style="padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:10px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.04);">
           <div style="width:36px;height:36px;border-radius:50%;background:rgba(91,108,255,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;">
             ${f.avatar && f.avatar.startsWith('/static/uploads/') ? `<img src="${f.avatar}" style="width:100%;height:100%;object-fit:cover;">` : (f.avatar || '👤')}
           </div>
           <div style="flex:1;">
-            <div style="font-weight:500;">${f.full_name || f.username}</div>
+            <div style="font-weight:500;color:#f0f0f5;">${f.full_name || f.username}</div>
             <div style="font-size:12px;color:#888;">@${f.username}</div>
           </div>
           <button onclick="addGroupMember(${f.id}, '${f.username}', '${f.full_name || f.username}')" style="background:#5B6CFF;border:none;border-radius:50%;width:30px;height:30px;color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">+</button>
         </div>
       `).join('');
     })
-    .catch(err => console.error('Ошибка загрузки друзей:', err));
+    .catch(err => {
+      console.error('❌ Ошибка загрузки друзей:', err);
+      container.innerHTML = '<div style="color:#ff6b6b;padding:12px;text-align:center;">Ошибка загрузки друзей</div>';
+    });
 }
 
 function addGroupMember(id, username, fullName) {
@@ -81,3 +94,5 @@ document.getElementById('createGroupBtn').addEventListener('click', function() {
   })
   .catch(err => alert('Ошибка: ' + err));
 });
+
+console.log('✅ group_create.js загружен');
