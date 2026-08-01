@@ -62,7 +62,7 @@ function loadFeed() {
           if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
             mediaHtml = `<video class="feed-video" src="${post.media_url}" controls></video>`;
           } else {
-            mediaHtml = `<img class="feed-image" src="${post.media_url}" alt="Изображение">`;
+            mediaHtml = `<img class="feed-image" onclick="openPhotoViewer(this.src)" src="${post.media_url}" alt="Изображение">`;
           }
         }
         
