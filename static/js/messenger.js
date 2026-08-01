@@ -762,48 +762,7 @@ function connectSocket() {
   });
 }
 
-function loadChats() {
-  fetch('/api/chats')
-    .then(res => res.json())
-    .then(chats => {
-      const container = document.getElementById('chatList');
-      if (!chats || chats.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-        return;
-      }
-      const privateChats = chats.filter(c => c.type === 'private');
-      const groupChats = chats.filter(c => c.type === 'group');
-      let html = '';
-      if (privateChats.length > 0) {
-        html += `<div class="section-label">👤 Личные чаты</div>`;
-        html += privateChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})" data-chat-id="${chat.id}">
-            <div class="chat-avatar">👤</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || 'Личный чат'}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join('');
-      }
-      if (groupChats.length > 0) {
-        html += `<div class="section-label">👥 Групповые чаты</div>`;
-        html += groupChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})" data-chat-id="${chat.id}">
-            <div class="chat-avatar">👥</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || 'Групповой чат'}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join('');
-      }
-      container.innerHTML = html || `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-    })
-    .catch(err => console.error('Ошибка загрузки чатов:', err));
-}
+cat /tmp/new_loadChats.js
 
 function openChat(chatId) {
   window.location.href = "/chat/" + chatId;

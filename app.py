@@ -626,11 +626,16 @@ def handle_send_message(data):
     )
     msg_id = cursor.lastrowid
     conn.commit()
-    msg = conn.execute('''
+    
+    # Увеличиваем счётчик непрочитанных для всех участников, кроме отправителя
+    cursor.execute('UPDATE chat_members SET unread_count = unread_count + 1 WHERE chat_id = ? AND user_id != ?', (chat_id, user_id))
+    conn.commit()
+    
+    msg = conn.execute('
         SELECT m.*, u.username, u.full_name
         FROM messages m JOIN users u ON m.user_id = u.id
         WHERE m.id = ?
-    ''', (msg_id,)).fetchone()
+    ', (msg_id,)).fetchone()
     conn.close()
     emit('new_message', dict(msg), room=f'chat_{chat_id}')
 
@@ -715,3 +720,34 @@ def api_create_group():
     conn.close()
     
     return jsonify({'chat_id': chat_id})
+
+@app.route('/api/unread/<int:chat_id>')
+def get_unread_count(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    conn = get_db()
+    result = conn.execute('''
+        SELECT unread_count FROM chat_members
+        WHERE chat_id = ? AND user_id = ?
+    ''', (chat_id, session['user_id'])).fetchone()
+    conn.close()
+    
+    return jsonify({'unread': result['unread_count'] if result else 0})
+
+# Модифицируем обработчик send_message
+
+@app.route('/api/read_chat/<int:chat_id>', methods=['POST'])
+def mark_chat_read(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    conn = get_db()
+    conn.execute('''
+        UPDATE chat_members SET unread_count = 0
+        WHERE chat_id = ? AND user_id = ?
+    ''', (chat_id, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})

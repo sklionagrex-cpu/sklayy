@@ -545,6 +545,8 @@ document.getElementById('messageInput').addEventListener('input', function() {
 });
 
 loadUserInfo();
+  // Обнуляем счётчик непрочитанных
+  fetch('/api/read_chat/' + chatId, { method: 'POST' });
 connectSocket();
 loadMessages();
 </script>
