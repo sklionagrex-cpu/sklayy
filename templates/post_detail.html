@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <style>
-    body { padding: 12px; padding-bottom: 100px; background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; margin: 0; }
+    body { padding: 16px; padding-bottom: 100px; background: #0b0b0f; color: #f0f0f5; font-family: 'Inter', sans-serif; margin: 0; }
     .back-btn { color: #f0f0f5; text-decoration: none; font-size: 24px; display: inline-block; margin-bottom: 16px; }
     .post-card { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 16px; }
     .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
@@ -42,8 +42,6 @@
     .send-btn:hover { transform: scale(1.05); }
     .empty-state { text-align: center; color: #888; padding: 20px; }
     .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
-    .empty-title { font-size: 18px; font-weight: 500; color: #888; }
-    .empty-text { font-size: 14px; color: #666; margin-top: 4px; }
     @media (max-width: 480px) {
       body { padding: 8px; padding-bottom: 80px; }
       .post-card { padding: 12px; }
@@ -62,7 +60,7 @@
   <div id="postContent"></div>
   <div class="comments-section">
     <h3>💬 Комментарии</h3>
-    <div id="commentsList"><div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет комментариев</div><div class="empty-text">Будьте первым!</div></div></div>
+    <div id="commentsList"><div class="empty-state"><div class="empty-icon">💬</div><div>Нет комментариев</div><div style="color:#666;font-size:14px;margin-top:4px;">Будьте первым!</div></div></div>
   </div>
   <div class="comment-input-area">
     <div class="comment-input-wrapper">
@@ -119,7 +117,7 @@
         .then(comments => {
           const container = document.getElementById('commentsList');
           if (!comments || comments.length === 0) {
-            container.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет комментариев</div><div class="empty-text">Будьте первым!</div></div>';
+            container.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div>Нет комментариев</div><div style="color:#666;font-size:14px;margin-top:4px;">Будьте первым!</div></div>';
             return;
           }
           container.innerHTML = comments.map(c => {
@@ -161,7 +159,6 @@
         input.value = '';
         input.style.height = 'auto';
         loadComments();
-        // Прокрутка вниз после отправки
         setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
       })
       .catch(err => console.error('Ошибка отправки:', err));
@@ -180,7 +177,6 @@
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
       });
-      // Прокрутка к последнему комментарию при загрузке
       setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 300);
     });
   </script>
