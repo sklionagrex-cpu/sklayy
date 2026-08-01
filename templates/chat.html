@@ -204,133 +204,6 @@
       color: #888;
     }
 
-    .chat-input-area {
-      display: flex !important;
-      align-items: flex-end;
-      gap: 8px;
-      padding: 8px 12px 12px;
-      background: rgba(20, 20, 28, 0.97);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255, 255, 255, 0.04);
-      flex-shrink: 0;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-    .input-wrapper {
-      flex: 1;
-      display: flex !important;
-      align-items: flex-end;
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 4px 4px 4px 16px;
-      transition: border 0.2s, background 0.2s;
-      visibility: visible !important;
-    }
-    .input-wrapper:focus-within {
-      border-color: rgba(91,108,255,0.3);
-      background: rgba(255,255,255,0.06);
-    }
-    .input-wrapper textarea {
-      flex: 1;
-      padding: 8px 4px 8px 0;
-      background: transparent;
-      border: none;
-      color: #f0f0f5;
-      font-family: 'Inter', sans-serif;
-      font-size: 15px;
-      resize: none;
-      outline: none;
-      min-height: 36px;
-      max-height: 120px;
-      line-height: 1.5;
-      display: block !important;
-      visibility: visible !important;
-    }
-    .input-wrapper textarea::placeholder { color: #666; }
-
-    .input-actions {
-      display: flex !important;
-      gap: 2px;
-      align-items: center;
-      flex-shrink: 0;
-      padding-right: 4px;
-      visibility: visible !important;
-    }
-    .input-actions .btn {
-      background: none;
-      border: none;
-      color: #888;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .input-actions .btn:hover {
-      background: rgba(255,255,255,0.05);
-      color: #f0f0f5;
-    }
-    .input-actions .btn.attach:hover { color: #5B6CFF; }
-
-    .send-btn {
-      background: #5B6CFF;
-      color: #fff;
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
-      box-shadow: 0 2px 12px rgba(91,108,255,0.3);
-      font-size: 22px;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      visibility: visible !important;
-    }
-    .send-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 20px rgba(91,108,255,0.4);
-    }
-    .send-btn:active { transform: scale(0.95); }
-    .send-btn svg {
-      width: 24px;
-      height: 24px;
-      fill: #fff;
-    }
-
-    #fileInput { display: none; }
-
-    @media (max-width: 480px) {
-      .message { max-width: 85%; font-size: 15px; padding: 6px 12px; }
-      .chat-input-area { padding: 6px 10px 10px; }
-      .input-wrapper { padding: 2px 2px 2px 12px; }
-      .input-wrapper textarea { font-size: 15px; padding: 6px 4px 6px 0; }
-      .chat-header { padding: 8px 12px; min-height: 48px; }
-      .chat-messages { padding: 8px 12px; }
-      .chat-avatar { width: 36px; height: 36px; font-size: 16px; }
-      .send-btn { width: 40px; height: 40px; font-size: 18px; }
-      .send-btn svg { width: 20px; height: 20px; }
-    }
-  </style>
-</head>
-<body>
-
-<div class="chat-container">
-
-  <div class="chat-header">
-    <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
-    <div class="chat-user">
-      <div class="chat-avatar" id="chatAvatar">👤</div>
       <div class="chat-info">
         <div class="chat-name" id="chatTitle">{{ chat_name }}</div>
         <div class="chat-status">
@@ -354,15 +227,6 @@
     </div>
   </div>
 
-  <div class="chat-input-area" id="inputArea">
-    <div class="input-wrapper">
-      <textarea id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="if(event.key==='Enter' &amp;&amp; !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-      <div class="input-actions">
-        <button class="btn attach" onclick="document.getElementById('fileInput').click()" title="Прикрепить файл">
-          <i class="fas fa-paperclip"></i>
-        </button>
-        <input type="file" id="fileInput" accept="image/*,video/*" onchange="uploadFile(this)">
-      </div>
     </div>
     <button class="send-btn" onclick="sendMessage()" title="Отправить">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -600,54 +464,41 @@ function testSend() {
 </script>
 <style>
   /* ПРИНУДИТЕЛЬНО ПОКАЗЫВАЕМ ВСЕ ЭЛЕМЕНТЫ ЧАТА */
-  .chat-input-area { display: flex !important; visibility: visible !important; opacity: 1 !important; }
-  .input-wrapper { display: flex !important; visibility: visible !important; }
-  #messageInput { display: block !important; visibility: visible !important; min-height: 40px !important; }
-  .send-btn { display: flex !important; visibility: visible !important; }
-  .input-actions { display: flex !important; visibility: visible !important; }
-  .chat-messages { display: flex !important; visibility: visible !important; }
-  .chat-container { display: flex !important; visibility: visible !important; }
-</style>
+<!-- НОВАЯ ПАНЕЛЬ ВВОДА (ГАРАНТИРОВАННО ВИДИМА) -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:#1a1a24;padding:10px 12px;display:flex;gap:8px;align-items:center;border-top:1px solid #333;z-index:9999;">
+  <input type="text" id="newMessageInput" placeholder="Сообщение..." style="flex:1;padding:10px 14px;border-radius:24px;border:1px solid #444;background:#0b0b0f;color:#fff;font-size:15px;outline:none;">
+  <button id="newSendBtn" style="background:#5B6CFF;color:#fff;border:none;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
+
 <script>
-  // Принудительно привязываем кнопку после загрузки страницы
-  document.addEventListener('DOMContentLoaded', function() {
-    const sendBtn = document.querySelector('.send-btn');
-    const textarea = document.getElementById('messageInput');
+  // Привязываем новую кнопку
+  document.getElementById('newSendBtn').addEventListener('click', function() {
+    const input = document.getElementById('newMessageInput');
+    const content = input.value.trim();
+    if (!content) return;
     
-    if (sendBtn) {
-      // Убираем старые обработчики
-      sendBtn.replaceWith(sendBtn.cloneNode(true));
-      const newBtn = document.querySelector('.send-btn');
-      
-      // Добавляем новый обработчик
-      newBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const msg = document.getElementById('messageInput');
-        if (msg && msg.value.trim()) {
-          console.log('✅ Отправляем:', msg.value);
-          // Вызываем глобальную sendMessage
-          if (typeof sendMessage === 'function') {
-            sendMessage();
-          } else {
-            alert('sendMessage не определена!');
-          }
-        } else {
-          alert('Введите сообщение');
-        }
-      });
-      
-      console.log('✅ Кнопка отправки привязана!');
-    }
-    
-    if (textarea) {
-      textarea.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          const btn = document.querySelector('.send-btn');
-          if (btn) btn.click();
-        }
-      });
-      console.log('✅ Поле ввода готово');
+    if (typeof sendMessage === 'function') {
+      // Используем существующую sendMessage
+      document.getElementById('messageInput').value = content;
+      sendMessage();
+      input.value = '';
+    } else {
+      // Отправляем напрямую через сокет
+      const chatId = {{ chat.id }};
+      const socket = io();
+      socket.emit('send_message', { chat_id: chatId, content: content });
+      input.value = '';
     }
   });
+  
+  // Отправка по Enter
+  document.getElementById('newMessageInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById('newSendBtn').click();
+    }
+  });
+  
+  console.log('✅ Новая панель ввода добавлена');
 </script>
