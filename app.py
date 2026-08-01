@@ -151,6 +151,12 @@ def chat_view(chat_id):
             chat_name = other['full_name'] or other['username']
     return render_template('chat.html', chat=chat, members=members, username=session.get('username'), chat_name=chat_name)
 
+@app.route('/post/<int:post_id>')
+def post_detail(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('post_detail.html', post_id=post_id)
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -525,6 +531,68 @@ def get_friends_with_chat():
     conn.close()
     return jsonify([dict(f) for f in friends])
 
+@app.route('/api/delete_chat/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    member = conn.execute(
+        'SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?',
+        (chat_id, session['user_id'])
+    ).fetchone()
+    if not member:
+        conn.close()
+        return jsonify({'error': 'Not a member'}), 403
+    chat = conn.execute('SELECT type FROM chats WHERE id = ?', (chat_id,)).fetchone()
+    if chat['type'] == 'private':
+        conn.execute(
+            'DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?',
+            (chat_id, session['user_id'])
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'type': 'private'})
+    else:
+        if member['role'] == 'admin':
+            conn.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
+            conn.execute('DELETE FROM chat_members WHERE chat_id = ?', (chat_id,))
+            conn.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'type': 'group'})
+        else:
+            conn.execute(
+                'DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?',
+                (chat_id, session['user_id'])
+            )
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'type': 'leave_group'})
+
+@app.route('/api/delete_chat_both/<int:chat_id>', methods=['DELETE'])
+def delete_chat_both(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    member = conn.execute(
+        'SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?',
+        (chat_id, session['user_id'])
+    ).fetchone()
+    if not member:
+        conn.close()
+        return jsonify({'error': 'Not a member'}), 403
+    chat = conn.execute('SELECT type FROM chats WHERE id = ?', (chat_id,)).fetchone()
+    if chat['type'] == 'private':
+        conn.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
+        conn.execute('DELETE FROM chat_members WHERE chat_id = ?', (chat_id,))
+        conn.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    else:
+        conn.close()
+        return jsonify({'error': 'Only private chats can be deleted for both'}), 400
+
 @socketio.on('send_message')
 def handle_send_message(data):
     chat_id = data.get('chat_id')
@@ -556,84 +624,3 @@ def handle_join_chat(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
-
-@app.route('/api/delete_chat/<int:chat_id>', methods=['DELETE'])
-def delete_chat(chat_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    conn = get_db()
-    
-    # Проверяем, является ли пользователь участником чата
-    member = conn.execute(
-        'SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?',
-        (chat_id, session['user_id'])
-    ).fetchone()
-    
-    if not member:
-        conn.close()
-        return jsonify({'error': 'Not a member'}), 403
-    
-    # Получаем тип чата
-    chat = conn.execute('SELECT type FROM chats WHERE id = ?', (chat_id,)).fetchone()
-    
-    if chat['type'] == 'private':
-        # Для личного чата - удаляем только у текущего пользователя
-        conn.execute(
-            'DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?',
-            (chat_id, session['user_id'])
-        )
-        conn.commit()
-        conn.close()
-        return jsonify({'success': True, 'type': 'private'})
-    else:
-        # Для группового чата - проверяем, является ли пользователь админом
-        if member['role'] == 'admin':
-            # Удаляем весь чат
-            conn.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
-            conn.execute('DELETE FROM chat_members WHERE chat_id = ?', (chat_id,))
-            conn.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
-            conn.commit()
-            conn.close()
-            return jsonify({'success': True, 'type': 'group'})
-        else:
-            # Удаляем только пользователя из группы
-            conn.execute(
-                'DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?',
-                (chat_id, session['user_id'])
-            )
-            conn.commit()
-            conn.close()
-            return jsonify({'success': True, 'type': 'leave_group'})
-
-@app.route('/api/delete_chat_both/<int:chat_id>', methods=['DELETE'])
-def delete_chat_both(chat_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    conn = get_db()
-    
-    # Проверяем, является ли пользователь участником чата
-    member = conn.execute(
-        'SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?',
-        (chat_id, session['user_id'])
-    ).fetchone()
-    
-    if not member:
-        conn.close()
-        return jsonify({'error': 'Not a member'}), 403
-    
-    # Получаем тип чата
-    chat = conn.execute('SELECT type FROM chats WHERE id = ?', (chat_id,)).fetchone()
-    
-    if chat['type'] == 'private':
-        # Для личного чата удаляем у обоих
-        conn.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
-        conn.execute('DELETE FROM chat_members WHERE chat_id = ?', (chat_id,))
-        conn.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
-        conn.commit()
-        conn.close()
-        return jsonify({'success': True})
-    else:
-        conn.close()
-        return jsonify({'error': 'Only private chats can be deleted for both'}), 400
