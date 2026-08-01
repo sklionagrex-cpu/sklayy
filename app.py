@@ -235,13 +235,16 @@ def get_chats():
     conn = get_db()
     chats = conn.execute('''
         SELECT c.*, 
-               (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count
+               (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count,
+               (SELECT u.full_name FROM chat_members cm 
+                JOIN users u ON cm.user_id = u.id 
+                WHERE cm.chat_id = c.id AND cm.user_id != ? LIMIT 1) as other_name
         FROM chats c 
         JOIN chat_members cm ON c.id = cm.chat_id 
         WHERE cm.user_id = ? 
         GROUP BY c.id
         ORDER BY c.created_at DESC
-    ''', (session['user_id'],)).fetchall()
+    ''', (session['user_id'], session['user_id'])).fetchall()
     conn.close()
     return jsonify([dict(chat) for chat in chats])
 
@@ -270,6 +273,7 @@ def create_chat():
         conn.close()
         return jsonify({'error': 'User not found'}), 404
     
+    # ПРОВЕРКА НА СУЩЕСТВУЮЩИЙ ЧАТ
     existing = conn.execute('''
         SELECT c.id FROM chats c
         JOIN chat_members cm1 ON c.id = cm1.chat_id
