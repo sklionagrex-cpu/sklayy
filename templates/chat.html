@@ -598,3 +598,56 @@ function testSend() {
   alert('✅ Сообщение отправлено!');
 }
 </script>
+<style>
+  /* ПРИНУДИТЕЛЬНО ПОКАЗЫВАЕМ ВСЕ ЭЛЕМЕНТЫ ЧАТА */
+  .chat-input-area { display: flex !important; visibility: visible !important; opacity: 1 !important; }
+  .input-wrapper { display: flex !important; visibility: visible !important; }
+  #messageInput { display: block !important; visibility: visible !important; min-height: 40px !important; }
+  .send-btn { display: flex !important; visibility: visible !important; }
+  .input-actions { display: flex !important; visibility: visible !important; }
+  .chat-messages { display: flex !important; visibility: visible !important; }
+  .chat-container { display: flex !important; visibility: visible !important; }
+</style>
+<script>
+  // Принудительно привязываем кнопку после загрузки страницы
+  document.addEventListener('DOMContentLoaded', function() {
+    const sendBtn = document.querySelector('.send-btn');
+    const textarea = document.getElementById('messageInput');
+    
+    if (sendBtn) {
+      // Убираем старые обработчики
+      sendBtn.replaceWith(sendBtn.cloneNode(true));
+      const newBtn = document.querySelector('.send-btn');
+      
+      // Добавляем новый обработчик
+      newBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const msg = document.getElementById('messageInput');
+        if (msg && msg.value.trim()) {
+          console.log('✅ Отправляем:', msg.value);
+          // Вызываем глобальную sendMessage
+          if (typeof sendMessage === 'function') {
+            sendMessage();
+          } else {
+            alert('sendMessage не определена!');
+          }
+        } else {
+          alert('Введите сообщение');
+        }
+      });
+      
+      console.log('✅ Кнопка отправки привязана!');
+    }
+    
+    if (textarea) {
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const btn = document.querySelector('.send-btn');
+          if (btn) btn.click();
+        }
+      });
+      console.log('✅ Поле ввода готово');
+    }
+  });
+</script>
