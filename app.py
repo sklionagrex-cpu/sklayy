@@ -656,3 +656,15 @@ def get_last_message(chat_id):
     if msg:
         return jsonify({'content': msg['content'], 'created_at': msg['created_at']})
     return jsonify({'content': '', 'created_at': ''})
+
+@app.route('/create_group')
+def create_group_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('create_group.html')
+
+@app.route('/create_group')
+def create_group_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('create_group.html')
