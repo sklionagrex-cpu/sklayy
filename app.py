@@ -644,3 +644,39 @@ def get_chats():
     ''', (session['user_id'], session['user_id'])).fetchall()
     conn.close()
     return jsonify([dict(chat) for chat in chats])
+
+@app.route('/api/create_chat', methods=['POST'])
+def create_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    username = request.json.get('username')
+    conn = get_db()
+    target = get_user_by_username(username)
+    if not target:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Проверяем, есть ли уже чат между пользователями
+    existing = conn.execute('''
+        SELECT c.id FROM chats c
+        JOIN chat_members cm1 ON c.id = cm1.chat_id
+        JOIN chat_members cm2 ON c.id = cm2.chat_id
+        WHERE c.type = 'private' 
+        AND cm1.user_id = ? AND cm2.user_id = ?
+    ''', (session['user_id'], target['id'])).fetchone()
+    
+    if existing:
+        conn.close()
+        return jsonify({'chat_id': existing['id']})
+    
+    cursor = conn.cursor()
+    # Создаём чат с именем собеседника
+    chat_name = target['full_name'] or target['username']
+    cursor.execute('INSERT INTO chats (name, type, created_by, created_at) VALUES (?, ?, ?, ?)',
+                   (chat_name, 'private', session['user_id'], datetime.now().isoformat()))
+    chat_id = cursor.lastrowid
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'chat_id': chat_id})
