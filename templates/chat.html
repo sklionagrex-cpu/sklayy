@@ -23,6 +23,8 @@
       max-width: 100%;
       background: #0b0b0f;
     }
+
+    /* ШАПКА */
     .chat-header {
       display: flex;
       align-items: center;
@@ -56,7 +58,6 @@
       gap: 12px;
       flex: 1;
       min-width: 0;
-      cursor: pointer;
     }
     .chat-avatar {
       width: 40px;
@@ -97,6 +98,7 @@
     .chat-status .dot.online { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.4); }
     .chat-status .dot.offline { background: #666; }
 
+    /* СООБЩЕНИЯ */
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -119,7 +121,6 @@
       word-wrap: break-word;
       animation: fadeIn 0.15s ease;
       margin-bottom: 2px;
-      position: relative;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
@@ -142,14 +143,6 @@
       font-weight: 600;
       color: #5B6CFF;
       margin-bottom: 2px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .message .sender .time-inline {
-      font-weight: 400;
-      color: #888;
-      font-size: 10px;
     }
     .message .time {
       font-size: 10px;
@@ -204,6 +197,135 @@
       color: #888;
     }
 
+    /* ПАНЕЛЬ ВВОДА (Telegram-стиль) — ГАРАНТИРОВАННО ВИДИМА */
+    .chat-input-area {
+      display: flex !important;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 8px 12px 12px;
+      background: rgba(20, 20, 28, 0.97);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      flex-shrink: 0;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .input-wrapper {
+      flex: 1;
+      display: flex !important;
+      align-items: flex-end;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 4px 4px 4px 16px;
+      transition: border 0.2s, background 0.2s;
+      visibility: visible !important;
+    }
+    .input-wrapper:focus-within {
+      border-color: rgba(91,108,255,0.3);
+      background: rgba(255,255,255,0.06);
+    }
+    .input-wrapper textarea {
+      flex: 1;
+      padding: 8px 4px 8px 0;
+      background: transparent;
+      border: none;
+      color: #f0f0f5;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      resize: none;
+      outline: none;
+      min-height: 36px;
+      max-height: 120px;
+      line-height: 1.5;
+      display: block !important;
+      visibility: visible !important;
+    }
+    .input-wrapper textarea::placeholder { color: #666; }
+
+    .input-actions {
+      display: flex !important;
+      gap: 2px;
+      align-items: center;
+      flex-shrink: 0;
+      padding-right: 4px;
+      visibility: visible !important;
+    }
+    .input-actions .btn {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .input-actions .btn:hover {
+      background: rgba(255,255,255,0.05);
+      color: #f0f0f5;
+    }
+    .input-actions .btn.attach:hover { color: #5B6CFF; }
+
+    .send-btn {
+      background: #5B6CFF;
+      color: #fff;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(91,108,255,0.3);
+      font-size: 22px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      visibility: visible !important;
+    }
+    .send-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(91,108,255,0.4);
+    }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    #fileInput { display: none; }
+
+    @media (max-width: 480px) {
+      .message { max-width: 85%; font-size: 15px; padding: 6px 12px; }
+      .chat-input-area { padding: 6px 10px 10px; }
+      .input-wrapper { padding: 2px 2px 2px 12px; }
+      .input-wrapper textarea { font-size: 15px; padding: 6px 4px 6px 0; }
+      .chat-header { padding: 8px 12px; min-height: 48px; }
+      .chat-messages { padding: 8px 12px; }
+      .chat-avatar { width: 36px; height: 36px; font-size: 16px; }
+      .send-btn { width: 40px; height: 40px; font-size: 18px; }
+      .send-btn svg { width: 20px; height: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+
+  <!-- ШАПКА -->
+  <div class="chat-header">
+    <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div class="chat-user">
+      <div class="chat-avatar" id="chatAvatar">👤</div>
       <div class="chat-info">
         <div class="chat-name" id="chatTitle">{{ chat_name }}</div>
         <div class="chat-status">
@@ -212,11 +334,9 @@
         </div>
       </div>
     </div>
-    <div class="chat-header-actions">
-      <button onclick="window.location.reload()" title="Обновить"><i class="fas fa-sync-alt"></i></button>
-    </div>
   </div>
 
+  <!-- СООБЩЕНИЯ -->
   <div class="chat-messages" id="chatMessages">
     <div id="messagesContainer">
       <div class="empty-chat">
@@ -227,6 +347,16 @@
     </div>
   </div>
 
+  <!-- ПАНЕЛЬ ВВОДА -->
+  <div class="chat-input-area" id="inputArea">
+    <div class="input-wrapper">
+      <textarea id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="if(event.key==='Enter' &amp;&amp; !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+      <div class="input-actions">
+        <button class="btn attach" onclick="document.getElementById('fileInput').click()" title="Прикрепить файл">
+          <i class="fas fa-paperclip"></i>
+        </button>
+        <input type="file" id="fileInput" accept="image/*,video/*" onchange="uploadFile(this)">
+      </div>
     </div>
     <button class="send-btn" onclick="sendMessage()" title="Отправить">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -306,9 +436,9 @@ function loadMessages() {
           }
         }
         html += '<div class="message ' + (isMine ? 'mine' : 'other') + '">' +
-          (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + ' <span class="time-inline">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span></div>' : '') +
+          (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
           (msg.content || '') + fileHtml +
-          (isMine ? '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' : '') +
+          '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' +
           '</div>';
       });
       container.innerHTML = html;
@@ -370,9 +500,9 @@ function addMessage(msg) {
     }
   }
   container.insertAdjacentHTML('beforeend', '<div class="message ' + (isMine ? 'mine' : 'other') + '">' +
-    (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + ' <span class="time-inline">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span></div>' : '') +
+    (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
     (msg.content || '') + fileHtml +
-    (isMine ? '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' : '') +
+    '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' +
     '</div>');
   scrollToBottom();
 }
@@ -391,7 +521,7 @@ loadUserInfo();
 connectSocket();
 loadMessages();
 
-// ПРИНУДИТЕЛЬНО ПОКАЗЫВАЕМ ПАНЕЛЬ ВВОДА
+// Принудительно показываем панель ввода
 setTimeout(function() {
   const area = document.getElementById('inputArea');
   if (area) {
@@ -408,97 +538,3 @@ setTimeout(function() {
 </script>
 </body>
 </html>
-<script>
-  // ОТЛАДКА: выводим всё в видимый блок на странице
-  window.onerror = function(msg, url, line, col, error) {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;bottom:10px;left:10px;background:red;color:white;padding:10px;z-index:9999;font-size:12px;max-width:90%;';
-    div.textContent = 'Ошибка: ' + msg;
-    document.body.appendChild(div);
-  };
-  
-  console.log = function(msg) {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;bottom:50px;left:10px;background:#333;color:#0f0;padding:5px;z-index:9999;font-size:11px;max-width:90%;';
-    div.textContent = 'LOG: ' + msg;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 5000);
-  };
-  
-  console.log('✅ chat.html загружен');
-  console.log('✅ messageInput:', document.getElementById('messageInput'));
-  console.log('✅ send-btn:', document.querySelector('.send-btn'));
-  console.log('✅ socket:', typeof io);
-</script>
-<!-- ТЕСТОВАЯ КНОПКА ОТПРАВКИ -->
-<div style="position:fixed;bottom:100px;right:10px;z-index:9999;background:#5B6CFF;padding:10px 20px;border-radius:12px;cursor:pointer;color:#fff;font-weight:600;" onclick="testSend()">
-  ⚡ Тест
-</div>
-
-<script>
-function testSend() {
-  const chatId = {{ chat.id }};
-  const socket = io();
-  socket.emit('send_message', { 
-    chat_id: chatId, 
-    content: 'Тестовое сообщение от ' + new Date().toLocaleTimeString() 
-  });
-  alert('✅ Сообщение отправлено!');
-}
-</script>
-<!-- ТЕСТОВАЯ КНОПКА ОТПРАВКИ -->
-<div style="position:fixed;bottom:100px;right:10px;z-index:9999;background:#5B6CFF;padding:10px 20px;border-radius:12px;cursor:pointer;color:#fff;font-weight:600;" onclick="testSend()">
-  ⚡ Тест
-</div>
-
-<script>
-function testSend() {
-  const chatId = {{ chat.id }};
-  const socket = io();
-  socket.emit('send_message', { 
-    chat_id: chatId, 
-    content: 'Тестовое сообщение от ' + new Date().toLocaleTimeString() 
-  });
-  alert('✅ Сообщение отправлено!');
-}
-</script>
-<style>
-  /* ПРИНУДИТЕЛЬНО ПОКАЗЫВАЕМ ВСЕ ЭЛЕМЕНТЫ ЧАТА */
-<!-- НОВАЯ ПАНЕЛЬ ВВОДА (ГАРАНТИРОВАННО ВИДИМА) -->
-<div style="position:fixed;bottom:0;left:0;right:0;background:#1a1a24;padding:10px 12px;display:flex;gap:8px;align-items:center;border-top:1px solid #333;z-index:9999;">
-  <input type="text" id="newMessageInput" placeholder="Сообщение..." style="flex:1;padding:10px 14px;border-radius:24px;border:1px solid #444;background:#0b0b0f;color:#fff;font-size:15px;outline:none;">
-  <button id="newSendBtn" style="background:#5B6CFF;color:#fff;border:none;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-  </button>
-</div>
-
-<script>
-  // Привязываем новую кнопку
-  document.getElementById('newSendBtn').addEventListener('click', function() {
-    const input = document.getElementById('newMessageInput');
-    const content = input.value.trim();
-    if (!content) return;
-    
-    if (typeof sendMessage === 'function') {
-      // Используем существующую sendMessage
-      document.getElementById('messageInput').value = content;
-      sendMessage();
-      input.value = '';
-    } else {
-      // Отправляем напрямую через сокет
-      const chatId = {{ chat.id }};
-      const socket = io();
-      socket.emit('send_message', { chat_id: chatId, content: content });
-      input.value = '';
-    }
-  });
-  
-  // Отправка по Enter
-  document.getElementById('newMessageInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      document.getElementById('newSendBtn').click();
-    }
-  });
-  
-  console.log('✅ Новая панель ввода добавлена');
-</script>
