@@ -632,3 +632,169 @@ if (splashShown) {
     }
   }, 1200);
 }
+
+function deleteChat(chatId, deleteForBoth = false) {
+  const url = deleteForBoth 
+    ? `/api/delete_chat_both/${chatId}`
+    : `/api/delete_chat/${chatId}`;
+  
+  const message = deleteForBoth 
+    ? 'Удалить чат для всех участников?' 
+    : 'Удалить чат только у себя?';
+  
+  if (!confirm(message)) return;
+  
+  fetch(url, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        loadChats();
+        loadFriendsChats();
+      } else {
+        alert(data.error || 'Ошибка удаления чата');
+      }
+    })
+    .catch(err => alert('Ошибка: ' + err));
+}
+
+// Добавляем долгое нажатие на чат
+function setupChatLongPress() {
+  const chatItems = document.querySelectorAll('.chat-item');
+  chatItems.forEach(item => {
+    let timer;
+    let isLongPress = false;
+    
+    item.addEventListener('touchstart', function(e) {
+      isLongPress = false;
+      timer = setTimeout(() => {
+        isLongPress = true;
+        const chatId = this.dataset.chatId || this.getAttribute('onclick')?.match(/\d+/)?.[0];
+        if (chatId) {
+          showChatMenu(chatId, this);
+        }
+      }, 500);
+    });
+    
+    item.addEventListener('touchend', function() {
+      clearTimeout(timer);
+      if (isLongPress) {
+        e.preventDefault();
+      }
+    });
+    
+    item.addEventListener('touchmove', function() {
+      clearTimeout(timer);
+    });
+  });
+}
+
+function showChatMenu(chatId, element) {
+  // Создаем контекстное меню
+  const existingMenu = document.querySelector('.chat-context-menu');
+  if (existingMenu) existingMenu.remove();
+  
+  const rect = element.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.className = 'chat-context-menu';
+  menu.style.cssText = `
+    position: fixed;
+    top: ${rect.bottom + 10}px;
+    left: ${rect.left}px;
+    background: rgba(20,20,28,0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 8px;
+    min-width: 200px;
+    z-index: 1000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: fadeIn 0.2s ease;
+  `;
+  
+  menu.innerHTML = `
+    <div class="menu-item" onclick="deleteChat(${chatId}, false)" style="
+      padding: 10px 16px;
+      color: #f0f0f5;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    ">
+      <i class="fas fa-user-slash" style="color:#ff6b6b;"></i>
+      <span>Удалить у себя</span>
+    </div>
+    <div class="menu-item" onclick="deleteChat(${chatId}, true)" style="
+      padding: 10px 16px;
+      color: #f0f0f5;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    ">
+      <i class="fas fa-trash-alt" style="color:#ff6b6b;"></i>
+      <span>Удалить у обоих</span>
+    </div>
+    <div class="menu-item" onclick="this.closest('.chat-context-menu').remove()" style="
+      padding: 10px 16px;
+      color: #888;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    ">
+      <i class="fas fa-times"></i>
+      <span>Отмена</span>
+    </div>
+  `;
+  
+  document.body.appendChild(menu);
+  
+  // Клик вне меню закрывает его
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 10);
+}
+
+// Добавляем стили для меню
+const menuStyle = document.createElement('style');
+menuStyle.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .chat-context-menu .menu-item:hover {
+    background: rgba(255,255,255,0.05);
+  }
+  .chat-context-menu .menu-item:first-child:hover {
+    background: rgba(255,70,70,0.1);
+  }
+  .chat-context-menu .menu-item:nth-child(2):hover {
+    background: rgba(255,70,70,0.1);
+  }
+`;
+document.head.appendChild(menuStyle);
+
+// Вызываем настройку после загрузки чатов
+const originalLoadChats = loadChats;
+loadChats = function() {
+  originalLoadChats();
+  setTimeout(setupChatLongPress, 300);
+};
+
+// Также добавляем для друзей в чатах
+const originalLoadFriendsChats = loadFriendsChats;
+loadFriendsChats = function() {
+  originalLoadFriendsChats();
+  setTimeout(setupChatLongPress, 300);
+};
