@@ -99,7 +99,7 @@
     .chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 16px 16px 8px;
+      padding: 16px 12px 8px;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -110,28 +110,43 @@
     .chat-messages::-webkit-scrollbar-track { background: transparent; }
     .chat-messages::-webkit-scrollbar-thumb { background: rgba(91,108,255,0.3); border-radius: 10px; }
 
+    /* КОНТЕЙНЕР ДЛЯ СООБЩЕНИЯ — автоширина, отступы */
+    .message-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+      width: fit-content;
+      margin-bottom: 2px;
+    }
+    .message-wrapper.mine {
+      align-self: flex-end;
+      margin-right: 0;
+    }
+    .message-wrapper.other {
+      align-self: flex-start;
+      margin-left: 0;
+    }
+
     .message {
-      max-width: 78%;
       padding: 10px 16px;
       border-radius: 18px;
       font-size: 16px;
       line-height: 1.5;
       word-wrap: break-word;
       animation: fadeIn 0.15s ease;
-      margin-bottom: 2px;
+      width: fit-content;
+      max-width: 100%;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .message.mine {
-      align-self: flex-end;
       background: #5B6CFF;
       border-bottom-right-radius: 4px;
       color: #fff;
     }
     .message.other {
-      align-self: flex-start;
       background: #1e1e2a;
       border-bottom-left-radius: 4px;
       color: #f0f0f5;
@@ -195,7 +210,7 @@
       color: #888;
     }
 
-    /* ===== ПАНЕЛЬ ВВОДА (всегда внизу) ===== */
+    /* ===== ПАНЕЛЬ ВВОДА ===== */
     .chat-input-area {
       display: flex;
       align-items: flex-end;
@@ -294,12 +309,13 @@
     #fileInput { display: none; }
 
     @media (max-width: 480px) {
-      .message { max-width: 85%; font-size: 15px; padding: 8px 14px; }
+      .message-wrapper { max-width: 90%; }
+      .message { font-size: 15px; padding: 8px 14px; }
       .chat-input-area { padding: 6px 10px 10px; min-height: 56px; }
       .input-wrapper { min-height: 38px; padding: 2px 2px 2px 12px; }
       .input-wrapper textarea { font-size: 15px; min-height: 32px; padding: 6px 4px; }
       .chat-header { padding: 10px 12px; min-height: 52px; }
-      .chat-messages { padding: 12px 12px 6px; }
+      .chat-messages { padding: 12px 8px 6px; }
       .chat-avatar { width: 38px; height: 38px; font-size: 17px; }
       .send-btn { width: 42px; height: 42px; }
       .send-btn svg { width: 18px; height: 18px; }
@@ -420,11 +436,15 @@ function loadMessages() {
             fileHtml = '<div class="file"><img src="' + msg.file_url + '" alt="Изображение" loading="lazy"></div>';
           }
         }
-        html += '<div class="message ' + (isMine ? 'mine' : 'other') + '">' +
-          (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
-          (msg.content || '') + fileHtml +
-          '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' +
-          '</div>';
+        const wrapperClass = isMine ? 'mine' : 'other';
+        html += '<div class="message-wrapper ' + wrapperClass + '">';
+        html += '<div class="message ' + (isMine ? 'mine' : 'other') + '">';
+        if (!isMine) {
+          html += '<div class="sender">' + (msg.full_name || msg.username) + '</div>';
+        }
+        html += (msg.content || '') + fileHtml;
+        html += '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>';
+        html += '</div></div>';
       });
       container.innerHTML = html;
       scrollToBottom();
@@ -484,12 +504,31 @@ function addMessage(msg) {
       fileHtml = '<div class="file"><img src="' + msg.file_url + '" alt="Изображение" loading="lazy"></div>';
     }
   }
+  const wrapperClass = isMine ? 'mine' : 'other';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'message-wrapper ' + wrapperClass;
+  
   const div = document.createElement('div');
   div.className = 'message ' + (isMine ? 'mine' : 'other');
-  div.innerHTML = (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
-    (msg.content || '') + fileHtml +
-    '<span class="time">' + new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>';
-  container.appendChild(div);
+  if (!isMine) {
+    const sender = document.createElement('div');
+    sender.className = 'sender';
+    sender.textContent = msg.full_name || msg.username;
+    div.appendChild(sender);
+  }
+  if (msg.content) {
+    div.appendChild(document.createTextNode(msg.content));
+  }
+  if (fileHtml) {
+    div.insertAdjacentHTML('beforeend', fileHtml);
+  }
+  const time = document.createElement('span');
+  time.className = 'time';
+  time.textContent = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  div.appendChild(time);
+  
+  wrapper.appendChild(div);
+  container.appendChild(wrapper);
   scrollToBottom();
 }
 
