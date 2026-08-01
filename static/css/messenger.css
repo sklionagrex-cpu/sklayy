@@ -213,3 +213,112 @@ body { font-family: 'Inter', sans-serif; background: #0b0b0f; color: #f0f0f5; he
   .feed-media-container { aspect-ratio:9/16; }
   .feed-text-post { padding:16px; }
 }
+
+/* ===== МЕДИА ПОСТЫ БЕЗ ПУСТЫХ ПОЛЕЙ ===== */
+.feed-media-item {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.feed-media-wrapper {
+  width: 100%;
+  max-width: 100% !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0 !important;
+}
+.feed-media-container {
+  position: relative;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  overflow: hidden;
+}
+.feed-media-container img,
+.feed-media-container video {
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  display: block;
+  background: transparent !important;
+}
+.feed-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 16px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.feed-overlay .feed-user,
+.feed-overlay .feed-actions {
+  pointer-events: auto;
+}
+.feed-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.feed-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(91,108,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+.feed-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.feed-user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.feed-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.feed-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.feed-action-btn i {
+  font-size: 28px;
+}
+.feed-action-btn span {
+  font-size: 13px;
+  font-weight: 500;
+}
+.feed-action-btn:hover {
+  transform: scale(1.05);
+}
+.feed-caption {
+  color: #ccc;
+  font-size: 14px;
+  padding: 8px 4px 0 4px;
+  margin-top: 4px;
+  word-wrap: break-word;
+}
