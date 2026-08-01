@@ -176,7 +176,7 @@
 <div class="form-group">
   <label>Выберите участников (минимум 2)</label>
   <div class="selected-count">Выбрано: <span id="selectedCount">0</span></div>
-  <div class="friends-list" id="friendsList">
+  <div class="friends-list" id="groupFriendsList">
     <div class="empty-state">⏳ Загрузка друзей...</div>
   </div>
 </div>
@@ -187,10 +187,21 @@
 let selectedFriends = [];
 
 function loadFriends() {
-  const container = document.getElementById('friendsList');
+  const container = document.getElementById('groupFriendsList');
+  if (!container) {
+    console.error('❌ Контейнер groupFriendsList не найден');
+    return;
+  }
+  
+  container.innerHTML = '<div class="empty-state">⏳ Загрузка...</div>';
+  
   fetch('/api/friends')
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(friends => {
+      console.log('✅ Друзья получены:', friends);
       if (!friends || friends.length === 0) {
         container.innerHTML = '<div class="empty-state">У вас нет друзей</div>';
         return;
@@ -212,8 +223,8 @@ function loadFriends() {
       }).join('');
     })
     .catch(err => {
-      console.error('Ошибка загрузки друзей:', err);
-      container.innerHTML = '<div class="empty-state">Ошибка загрузки друзей</div>';
+      console.error('❌ Ошибка загрузки друзей:', err);
+      container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки друзей</div>';
     });
 }
 
@@ -245,7 +256,6 @@ document.getElementById('createGroupBtn').addEventListener('click', function() {
   if (!name) { alert('Введите название группы'); return; }
   if (selectedFriends.length < 2) { alert('Выберите минимум 2 участника'); return; }
   
-  // Получаем имена выбранных друзей
   const selectedNames = [];
   document.querySelectorAll('.friend-item.selected').forEach(el => {
     const username = el.querySelector('.friend-username').textContent.replace('@', '');
@@ -268,7 +278,8 @@ document.getElementById('createGroupBtn').addEventListener('click', function() {
   .catch(err => alert('Ошибка: ' + err));
 });
 
-loadFriends();
+// Загружаем друзей при открытии страницы
+document.addEventListener('DOMContentLoaded', loadFriends);
 </script>
 </body>
 </html>
