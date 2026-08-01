@@ -586,3 +586,179 @@ function rejectFriend(requestId) {
     })
     .catch(err => console.error('Ошибка:', err));
 }
+
+function loadFriendsChats() {
+  fetch('/api/friends_with_chat')
+    .then(res => res.json())
+    .then(friends => {
+      const container = document.getElementById('friendsChatList');
+      if (!friends || friends.length === 0) {
+        container.innerHTML = '<div class="empty-state">Нет друзей для чата</div>';
+        return;
+      }
+      container.innerHTML = `
+        <div class="section-label">👥 Друзья</div>
+        ${friends.map(f => {
+          const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
+            ? `<img src="${f.avatar}" alt="Avatar">`
+            : (f.avatar || '👤');
+          return `
+            <div class="chat-item" onclick="openChatOrCreate(${f.chat_id}, '${f.username}')">
+              <div class="chat-avatar">${avatarHtml}</div>
+              <div class="chat-info">
+                <div class="chat-name">${f.full_name || f.username}</div>
+                <div class="chat-preview">${f.online ? '🟢 Онлайн' : '⚪ Не в сети'}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    })
+    .catch(err => console.error('Ошибка загрузки друзей:', err));
+}
+
+function openChatOrCreate(chatId, username) {
+  if (chatId) {
+    window.location.href = `/chat/${chatId}`;
+  } else {
+    fetch('/api/create_chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.chat_id) {
+        window.location.href = `/chat/${data.chat_id}`;
+      } else {
+        alert('Ошибка создания чата');
+      }
+    })
+    .catch(err => alert('Ошибка: ' + err));
+  }
+}
+
+function connectSocket() {
+  socket = io();
+  socket.on('connect', () => console.log('✅ WebSocket подключен'));
+  socket.on('new_message', () => {
+    loadChats();
+  });
+}
+
+function loadChats() {
+  fetch('/api/chats')
+    .then(res => res.json())
+    .then(chats => {
+      const container = document.getElementById('chatList');
+      if (!chats || chats.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
+        return;
+      }
+      const privateChats = chats.filter(c => c.type === 'private');
+      const groupChats = chats.filter(c => c.type === 'group');
+      let html = '';
+      if (privateChats.length > 0) {
+        html += `<div class="section-label">👤 Личные чаты</div>`;
+        html += privateChats.map(chat => `
+          <div class="chat-item" onclick="openChat(${chat.id})">
+            <div class="chat-avatar">👤</div>
+            <div class="chat-info">
+              <div class="chat-name">${chat.name || 'Личный чат'}</div>
+              <div class="chat-preview">${chat.member_count || 0} участников</div>
+            </div>
+            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
+          </div>
+        `).join('');
+      }
+      if (groupChats.length > 0) {
+        html += `<div class="section-label">👥 Групповые чаты</div>`;
+        html += groupChats.map(chat => `
+          <div class="chat-item" onclick="openChat(${chat.id})">
+            <div class="chat-avatar">👥</div>
+            <div class="chat-info">
+              <div class="chat-name">${chat.name || 'Групповой чат'}</div>
+              <div class="chat-preview">${chat.member_count || 0} участников</div>
+            </div>
+            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
+          </div>
+        `).join('');
+      }
+      container.innerHTML = html || `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
+    })
+    .catch(err => console.error('Ошибка загрузки чатов:', err));
+}
+
+function openChat(chatId) {
+  window.location.href = `/chat/${chatId}`;
+}
+
+function createGroup() {
+  const name = prompt('Название группы:');
+  if (!name || !name.trim()) return;
+  const membersInput = prompt('Участники через запятую (минимум 2):');
+  if (!membersInput || !membersInput.trim()) return;
+  const members = membersInput.split(',').map(m => m.trim()).filter(m => m);
+  if (members.length < 2) {
+    alert('Нужно минимум 2 участника');
+    return;
+  }
+  fetch('/api/create_group', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim(), members: members })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.chat_id) {
+      loadChats();
+      openChat(data.chat_id);
+    } else {
+      alert(data.error || 'Ошибка создания группы');
+    }
+  })
+  .catch(err => console.error('Ошибка:', err));
+}
+
+const dockItems = document.querySelectorAll('.dock-item');
+const panels = {
+  'panel-feed': document.getElementById('panel-feed'),
+  'panel-chats': document.getElementById('panel-chats'),
+  'panel-profile': document.getElementById('panel-profile')
+};
+
+dockItems.forEach(item => {
+  item.addEventListener('click', function() {
+    dockItems.forEach(d => d.classList.remove('active'));
+    this.classList.add('active');
+    Object.values(panels).forEach(p => p.classList.remove('active'));
+    const panelId = this.dataset.panel;
+    if (panels[panelId]) {
+      panels[panelId].classList.add('active');
+    }
+  });
+});
+
+const splashShown = sessionStorage.getItem('splash_shown');
+if (splashShown) {
+  splash.style.display = 'none';
+  app.classList.add('app-visible');
+  initApp();
+} else {
+  const messages = ['Создаем пространство...', 'Настраиваем безопасность...', 'Почти готово...'];
+  let msgIndex = 0;
+  const msgInterval = setInterval(() => {
+    msgIndex++;
+    if (msgIndex < messages.length) {
+      splashMessage.textContent = messages[msgIndex];
+    } else {
+      clearInterval(msgInterval);
+      setTimeout(() => {
+        splash.classList.add('splash-hidden');
+        app.classList.add('app-visible');
+        sessionStorage.setItem('splash_shown', 'true');
+        initApp();
+      }, 600);
+    }
+  }, 1200);
+}
