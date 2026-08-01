@@ -66,10 +66,12 @@ def get_feed_posts(user_id):
     return posts
 
 @app.route('/')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -83,6 +85,7 @@ def login():
     return render_template('auth.html', mode='login')
 
 @app.route('/register', methods=['GET', 'POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -103,12 +106,14 @@ def register():
     return render_template('auth.html', mode='register')
 
 @app.route('/app')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def messenger():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('messenger.html', username=session.get('username'))
 
 @app.route('/profile')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def profile_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -118,6 +123,7 @@ def profile_page():
     return render_template('profile.html', user=user)
 
 @app.route('/profile/edit')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def edit_profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -127,6 +133,7 @@ def edit_profile():
     return render_template('edit_profile.html', user=user)
 
 @app.route('/chat/<int:chat_id>')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def chat_view(chat_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -155,17 +162,20 @@ def chat_view(chat_id):
     return render_template('chat.html', chat=chat, members=members, username=session.get('username'), chat_name=chat_name)
 
 @app.route('/post/<int:post_id>')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def post_detail(post_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return render_template('post_detail.html', post_id=post_id)
 
 @app.route('/logout')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
 @app.route('/api/profile')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_profile():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -175,6 +185,7 @@ def get_profile():
     return jsonify(dict(user))
 
 @app.route('/api/profile', methods=['PUT'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def update_profile():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -188,6 +199,7 @@ def update_profile():
     return jsonify({'success': True})
 
 @app.route('/api/upload_avatar', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def upload_avatar():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -208,6 +220,7 @@ def upload_avatar():
     return jsonify({'url': url})
 
 @app.route('/api/upload_media', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def upload_media():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -229,6 +242,7 @@ def upload_media():
     return jsonify({'url': url})
 
 @app.route('/api/chats')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_chats():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -246,6 +260,7 @@ def get_chats():
     return jsonify([dict(chat) for chat in chats])
 
 @app.route('/api/messages/<int:chat_id>')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_messages(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -260,6 +275,7 @@ def get_messages(chat_id):
     return jsonify([dict(m) for m in msgs])
 
 @app.route('/api/create_chat', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def create_chat():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -294,6 +310,7 @@ def create_chat():
     return jsonify({'chat_id': chat_id})
 
 @app.route('/api/friends')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_friends():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -313,6 +330,7 @@ def get_friends():
     return jsonify([dict(f) for f in friends])
 
 @app.route('/api/friend_requests')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_friend_requests():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -326,6 +344,7 @@ def get_friend_requests():
     return jsonify([dict(r) for r in reqs])
 
 @app.route('/api/friends', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def send_friend_request():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -350,6 +369,7 @@ def send_friend_request():
     return jsonify({'success': True})
 
 @app.route('/api/friends/<int:request_id>', methods=['PUT'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def accept_friend(request_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -365,6 +385,7 @@ def accept_friend(request_id):
     return jsonify({'success': True})
 
 @app.route('/api/friends/<int:request_id>', methods=['DELETE'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def reject_friend(request_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -376,6 +397,7 @@ def reject_friend(request_id):
     return jsonify({'success': True})
 
 @app.route('/api/posts')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_posts():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -393,6 +415,7 @@ def get_posts():
     return jsonify([dict(post) for post in posts])
 
 @app.route('/api/posts', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def create_post():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -411,6 +434,7 @@ def create_post():
     return jsonify({'success': True})
 
 @app.route('/api/posts/<int:post_id>/like', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def like_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -434,6 +458,7 @@ def like_post(post_id):
     return jsonify({'success': True})
 
 @app.route('/api/posts/<int:post_id>/comments')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_comments(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -449,6 +474,7 @@ def get_comments(post_id):
     return jsonify([dict(c) for c in comments])
 
 @app.route('/api/posts/<int:post_id>/comments', methods=['POST'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def add_comment(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -474,6 +500,7 @@ def add_comment(post_id):
     return jsonify(dict(comment))
 
 @app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def delete_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -491,6 +518,7 @@ def delete_comment(comment_id):
     return jsonify({'success': True})
 
 @app.route('/api/feed')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_feed():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -498,6 +526,7 @@ def get_feed():
     return jsonify([dict(p) for p in posts])
 
 @app.route('/api/chat_users/<int:chat_id>')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_chat_users(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -514,6 +543,7 @@ def get_chat_users(chat_id):
     return jsonify({'error': 'No users found'}), 404
 
 @app.route('/api/friends_with_chat')
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def get_friends_with_chat():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -543,6 +573,7 @@ def get_friends_with_chat():
     return jsonify([dict(f) for f in friends])
 
 @app.route('/api/delete_chat/<int:chat_id>', methods=['DELETE'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def delete_chat(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -581,6 +612,7 @@ def delete_chat(chat_id):
             return jsonify({'success': True, 'type': 'leave_group'})
 
 @app.route('/api/delete_chat_both/<int:chat_id>', methods=['DELETE'])
+pi/create_chat, methods=['POST'])/,/^def/ { /def create_chat():/,/^$/ d }
 def delete_chat_both(chat_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -635,3 +667,37 @@ def handle_join_chat(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+@app.route('/api/create_chat', methods=['POST'])
+def create_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    username = request.json.get('username')
+    conn = get_db()
+    target = get_user_by_username(username)
+    if not target:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+    
+    # ПРОВЕРКА НА СУЩЕСТВУЮЩИЙ ЧАТ
+    existing = conn.execute('''
+        SELECT c.id FROM chats c
+        JOIN chat_members cm1 ON c.id = cm1.chat_id
+        JOIN chat_members cm2 ON c.id = cm2.chat_id
+        WHERE c.type = 'private' 
+        AND cm1.user_id = ? AND cm2.user_id = ?
+    ''', (session['user_id'], target['id'])).fetchone()
+    
+    if existing:
+        conn.close()
+        return jsonify({'chat_id': existing['id']})
+    
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)',
+                   ('private', session['user_id'], datetime.now().isoformat()))
+    chat_id = cursor.lastrowid
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'chat_id': chat_id})
