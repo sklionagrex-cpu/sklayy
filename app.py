@@ -746,3 +746,53 @@ def handle_send_message(data):
     ''', (msg_id,)).fetchone()
     conn.close()
     emit('new_message', dict(msg), room=f'chat_{chat_id}')
+
+@app.route('/create_group')
+def create_group_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('create_group.html')
+
+@app.route('/api/create_group', methods=['POST'])
+def api_create_group():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json
+    name = data.get('name', '').strip()
+    members = data.get('members', [])
+    
+    if not name:
+        return jsonify({'error': 'Название группы обязательно'}), 400
+    if len(members) < 2:
+        return jsonify({'error': 'Нужно минимум 2 участника'}), 400
+    
+    conn = get_db()
+    
+    # Создаём группу
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO chats (name, type, created_by, created_at)
+        VALUES (?, 'group', ?, ?)
+    ''', (name, session['user_id'], datetime.now().isoformat()))
+    chat_id = cursor.lastrowid
+    
+    # Добавляем создателя
+    cursor.execute('''
+        INSERT INTO chat_members (chat_id, user_id, role)
+        VALUES (?, ?, 'admin')
+    ''', (chat_id, session['user_id']))
+    
+    # Добавляем участников
+    for username in members:
+        user = conn.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+        if user:
+            cursor.execute('''
+                INSERT INTO chat_members (chat_id, user_id, role)
+                VALUES (?, ?, 'member')
+            ''', (chat_id, user['id']))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'chat_id': chat_id})
