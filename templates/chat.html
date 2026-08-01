@@ -110,7 +110,7 @@
     .chat-messages::-webkit-scrollbar-track { background: transparent; }
     .chat-messages::-webkit-scrollbar-thumb { background: rgba(91,108,255,0.3); border-radius: 10px; }
 
-    /* КОНТЕЙНЕР ДЛЯ СООБЩЕНИЯ — автоширина, отступы */
+    /* КОНТЕЙНЕР ДЛЯ СООБЩЕНИЯ — автоширина */
     .message-wrapper {
       display: flex;
       flex-direction: column;
@@ -121,10 +121,12 @@
     .message-wrapper.mine {
       align-self: flex-end;
       margin-right: 0;
+      margin-left: auto;
     }
     .message-wrapper.other {
       align-self: flex-start;
       margin-left: 0;
+      margin-right: auto;
     }
 
     .message {
