@@ -566,3 +566,35 @@ setTimeout(function() {
   console.log('✅ send-btn:', document.querySelector('.send-btn'));
   console.log('✅ socket:', typeof io);
 </script>
+<!-- ТЕСТОВАЯ КНОПКА ОТПРАВКИ -->
+<div style="position:fixed;bottom:100px;right:10px;z-index:9999;background:#5B6CFF;padding:10px 20px;border-radius:12px;cursor:pointer;color:#fff;font-weight:600;" onclick="testSend()">
+  ⚡ Тест
+</div>
+
+<script>
+function testSend() {
+  const chatId = {{ chat.id }};
+  const socket = io();
+  socket.emit('send_message', { 
+    chat_id: chatId, 
+    content: 'Тестовое сообщение от ' + new Date().toLocaleTimeString() 
+  });
+  alert('✅ Сообщение отправлено!');
+}
+</script>
+<!-- ТЕСТОВАЯ КНОПКА ОТПРАВКИ -->
+<div style="position:fixed;bottom:100px;right:10px;z-index:9999;background:#5B6CFF;padding:10px 20px;border-radius:12px;cursor:pointer;color:#fff;font-weight:600;" onclick="testSend()">
+  ⚡ Тест
+</div>
+
+<script>
+function testSend() {
+  const chatId = {{ chat.id }};
+  const socket = io();
+  socket.emit('send_message', { 
+    chat_id: chatId, 
+    content: 'Тестовое сообщение от ' + new Date().toLocaleTimeString() 
+  });
+  alert('✅ Сообщение отправлено!');
+}
+</script>
