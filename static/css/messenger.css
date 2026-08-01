@@ -744,3 +744,14 @@ body { font-family: 'Inter', sans-serif; background: #0b0b0f; color: #f0f0f5; he
     min-height: 36px;
   }
 }
+/* ПРИНУДИТЕЛЬНО СКРЫВАЕМ SPLASH */
+#splash {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+#app {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
