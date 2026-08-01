@@ -104,14 +104,10 @@ def register():
 
 @app.route('/app')
 def messenger():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('messenger.html', username=session.get('username'))
 
 @app.route('/profile')
 def profile_page():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     conn.close()
@@ -119,18 +115,39 @@ def profile_page():
 
 @app.route('/profile/edit')
 def edit_profile():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     conn = get_db()
     user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     conn.close()
     return render_template('edit_profile.html', user=user)
 
+@app.route('/chat/<int:chat_id>')
+def chat_view(chat_id):
+    conn = get_db()
+    chat = conn.execute('SELECT * FROM chats WHERE id = ?', (chat_id,)).fetchone()
+    if not chat:
+        conn.close()
+        return redirect(url_for('messenger'))
+    members = conn.execute('''
+        SELECT u.id, u.username, u.full_name, u.avatar, u.online
+        FROM chat_members cm JOIN users u ON cm.user_id = u.id
+        WHERE cm.chat_id = ?
+    ''', (chat_id,)).fetchall()
+    conn.close()
+    chat_name = chat['name']
+    if chat['type'] == 'private':
+        conn = get_db()
+        other = conn.execute('''
+            SELECT u.full_name, u.username FROM chat_members cm
+            JOIN users u ON cm.user_id = u.id
+            WHERE cm.chat_id = ? AND cm.user_id != ?
+        ''', (chat_id, session['user_id'])).fetchone()
+        conn.close()
+        if other:
+            chat_name = other['full_name'] or other['username']
+    return render_template('chat.html', chat=chat, members=members, username=session.get('username'), chat_name=chat_name)
 
 @app.route('/post/<int:post_id>')
 def post_detail(post_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     return render_template('post_detail.html', post_id=post_id)
 
 @app.route('/logout')
@@ -140,43 +157,3 @@ def logout():
 
 @app.route('/api/profile')
 def get_profile():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    conn = get_db()
-    user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-    conn.close()
-    return jsonify(dict(user))
-
-@app.route('/api/profile', methods=['PUT'])
-def update_profile():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    data = request.json
-    conn = get_db()
-    for field in ['full_name', 'email', 'phone', 'bio', 'status', 'avatar']:
-        if field in data:
-            conn.execute(f'UPDATE users SET {field} = ? WHERE id = ?', (data[field], session['user_id']))
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True})
-
-@app.route('/api/upload_avatar', methods=['POST'])
-def upload_avatar():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    if 'avatar' not in request.files:
-        return jsonify({'error': 'No file'}), 400
-    file = request.files['avatar']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
-    filename = f"user_{session['user_id']}_{int(datetime.now().timestamp())}.{ext}"
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
-    url = f"/static/uploads/{filename}"
-    conn = get_db()
-    conn.execute('UPDATE users SET avatar = ? WHERE id = ?', (url, session['user_id']))
-    conn.commit()
-    conn.close()
-    return jsonify({'url': url})
-
