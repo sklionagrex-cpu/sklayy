@@ -87,7 +87,10 @@
               <div id="searchResults" class="search-results" style="display:none;"></div>
               <div class="friends-tabs">
                 <button class="friend-tab active" data-ftab="list" onclick="switchFriendTab('list')">Все друзья</button>
-                <button class="friend-tab" data-ftab="incoming" onclick="switchFriendTab('incoming')">Заявки</button>
+                <span class="friend-tab-wrapper">
+                  <button class="friend-tab" data-ftab="incoming" onclick="switchFriendTab('incoming')">Заявки</button>
+                  <span class="request-badge" id="friendRequestBadge"></span>
+                </span>
               </div>
               <div id="friendsList" class="friends-list"></div>
               <div id="friendRequests" class="friends-list" style="display:none;"></div>
