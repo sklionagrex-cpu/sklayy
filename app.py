@@ -662,6 +662,10 @@ def get_last_message(chat_id):
         return redirect(url_for('login'))
     return render_template('create_group.html')
 
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('create_group.html')
+
 @app.route('/create_group')
 def create_group_page():
     if 'user_id' not in session:
