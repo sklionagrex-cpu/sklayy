@@ -753,26 +753,6 @@ function loadFriendsChats() {
     .catch(err => console.error('Ошибка загрузки друзей:', err));
 }
 
-function openChatOrCreate(chatId, username) {
-  if (chatId) {
-    window.location.href = `/chat/${chatId}`;
-  } else {
-    fetch('/api/create_chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.chat_id) {
-        window.location.href = `/chat/${data.chat_id}`;
-      } else {
-        alert('Ошибка создания чата');
-      }
-    })
-    .catch(err => alert('Ошибка: ' + err));
-  }
-}
 
 function connectSocket() {
   socket = io();
