@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <style>
-    /* СБРОС */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
@@ -16,10 +15,7 @@
       color: #f0f0f5;
       height: 100vh;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
-
     .chat-container {
       display: flex;
       flex-direction: column;
@@ -27,8 +23,6 @@
       max-width: 100%;
       background: #0b0b0f;
     }
-
-    /* ШАПКА */
     .chat-header {
       display: flex;
       align-items: center;
@@ -62,6 +56,7 @@
       gap: 12px;
       flex: 1;
       min-width: 0;
+      cursor: pointer;
     }
     .chat-avatar {
       width: 40px;
@@ -102,7 +97,6 @@
     .chat-status .dot.online { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.4); }
     .chat-status .dot.offline { background: #666; }
 
-    /* СООБЩЕНИЯ */
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -116,7 +110,6 @@
     .chat-messages::-webkit-scrollbar-track { background: transparent; }
     .chat-messages::-webkit-scrollbar-thumb { background: rgba(91,108,255,0.3); border-radius: 10px; }
 
-    /* СООБЩЕНИЯ */
     .message {
       max-width: 80%;
       padding: 7px 14px;
@@ -211,7 +204,6 @@
       color: #888;
     }
 
-    /* ПАНЕЛЬ ВВОДА (принудительно видима) */
     .chat-input-area {
       display: flex !important;
       align-items: flex-end;
@@ -335,7 +327,6 @@
 
 <div class="chat-container">
 
-  <!-- ШАПКА -->
   <div class="chat-header">
     <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
     <div class="chat-user">
@@ -353,7 +344,6 @@
     </div>
   </div>
 
-  <!-- СООБЩЕНИЯ -->
   <div class="chat-messages" id="chatMessages">
     <div id="messagesContainer">
       <div class="empty-chat">
@@ -364,7 +354,6 @@
     </div>
   </div>
 
-  <!-- ПАНЕЛЬ ВВОДА (ПРИНУДИТЕЛЬНО ВИДИМА) -->
   <div class="chat-input-area" id="inputArea">
     <div class="input-wrapper">
       <textarea id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="if(event.key==='Enter' &amp;&amp; !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>

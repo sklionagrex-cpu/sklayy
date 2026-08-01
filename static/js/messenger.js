@@ -878,3 +878,55 @@ if (splashShown) {
     }
   }, 1200);
 }
+
+// ===== ПЕРЕОПРЕДЕЛЯЕМ loadChats (Telegram-стиль) =====
+const originalLoadChats = loadChats;
+loadChats = function() {
+  fetch("/api/chats")
+    .then(res => res.json())
+    .then(chats => {
+      const container = document.getElementById("chatList");
+      if (!chats || chats.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
+        return;
+      }
+      container.innerHTML = chats.map(chat => {
+        // Получаем аватар и имя собеседника для приватных чатов
+        let avatar = '👤';
+        let name = chat.name || 'Чат';
+        let preview = chat.member_count || 0;
+        
+        if (chat.type === 'private') {
+          // Пытаемся получить данные собеседника
+          fetch('/api/chat_users/' + chat.id)
+            .then(r => r.json())
+            .then(data => {
+              if (data && data.username) {
+                const el = document.querySelector(`[data-chat-id="${chat.id}"] .chat-name`);
+                if (el) el.textContent = data.full_name || data.username;
+                const avatarEl = document.querySelector(`[data-chat-id="${chat.id}"] .chat-avatar`);
+                if (avatarEl && data.avatar && data.avatar.startsWith('/static/uploads/')) {
+                  avatarEl.innerHTML = `<img src="${data.avatar}" alt="Avatar">`;
+                } else if (avatarEl) {
+                  avatarEl.textContent = data.avatar || '👤';
+                }
+              }
+            })
+            .catch(() => {});
+          name = chat.name || 'Чат';
+        }
+        
+        return `
+          <div class="chat-item" onclick="openChat(${chat.id})" data-chat-id="${chat.id}">
+            <div class="chat-avatar">${avatar}</div>
+            <div class="chat-info">
+              <div class="chat-name">${name}</div>
+              <div class="chat-preview">${preview} участников</div>
+            </div>
+            <div class="chat-badge">0</div>
+          </div>
+        `;
+      }).join("");
+    })
+    .catch(err => console.error("Ошибка загрузки чатов:", err));
+};
