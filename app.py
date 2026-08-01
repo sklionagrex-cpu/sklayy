@@ -641,3 +641,18 @@ def handle_join_chat(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+@app.route('/api/last_message/<int:chat_id>')
+def get_last_message(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    conn = get_db()
+    msg = conn.execute('''
+        SELECT content, created_at FROM messages
+        WHERE chat_id = ? AND deleted = 0
+        ORDER BY created_at DESC LIMIT 1
+    ''', (chat_id,)).fetchone()
+    conn.close()
+    if msg:
+        return jsonify({'content': msg['content'], 'created_at': msg['created_at']})
+    return jsonify({'content': '', 'created_at': ''})
