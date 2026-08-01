@@ -263,39 +263,6 @@ def get_messages(chat_id):
     return jsonify([dict(m) for m in msgs])
 
 @app.route('/api/create_chat', methods=['POST'])
-def create_chat():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    username = request.json.get('username')
-    conn = get_db()
-    target = get_user_by_username(username)
-    if not target:
-        conn.close()
-        return jsonify({'error': 'User not found'}), 404
-    
-    # ПРОВЕРКА НА СУЩЕСТВУЮЩИЙ ЧАТ
-    existing = conn.execute('''
-        SELECT c.id FROM chats c
-        JOIN chat_members cm1 ON c.id = cm1.chat_id
-        JOIN chat_members cm2 ON c.id = cm2.chat_id
-        WHERE c.type = 'private' 
-        AND cm1.user_id = ? AND cm2.user_id = ?
-    ''', (session['user_id'], target['id'])).fetchone()
-    
-    if existing:
-        conn.close()
-        return jsonify({'chat_id': existing['id']})
-    
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)',
-                   ('private', session['user_id'], datetime.now().isoformat()))
-    chat_id = cursor.lastrowid
-    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
-    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
-    conn.commit()
-    conn.close()
-    return jsonify({'chat_id': chat_id})
-
 @app.route('/api/friends')
 def get_friends():
     if 'user_id' not in session:
@@ -638,3 +605,36 @@ def handle_join_chat(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+
+@app.route('/api/create_chat', methods=['POST'])
+def create_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    username = request.json.get('username')
+    conn = get_db()
+    target = get_user_by_username(username)
+    if not target:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+    
+    existing = conn.execute('''
+        SELECT c.id FROM chats c
+        JOIN chat_members cm1 ON c.id = cm1.chat_id
+        JOIN chat_members cm2 ON c.id = cm2.chat_id
+        WHERE c.type = 'private' 
+        AND cm1.user_id = ? AND cm2.user_id = ?
+    ''', (session['user_id'], target['id'])).fetchone()
+    
+    if existing:
+        conn.close()
+        return jsonify({'chat_id': existing['id']})
+    
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)',
+                   ('private', session['user_id'], datetime.now().isoformat()))
+    chat_id = cursor.lastrowid
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'chat_id': chat_id})
