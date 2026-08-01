@@ -49,20 +49,17 @@
           </button>
         </div>
         <div class="panel-content profile-content">
-          <!-- Аватар -->
           <div class="profile-avatar" id="panelAvatar">👤</div>
           <div class="profile-name" id="panelName">{{ username }}</div>
           <div class="profile-status" id="panelStatus" style="color:#888;">Статус не установлен</div>
           <div class="profile-bio" id="panelBio" style="color:#666;font-size:14px;">Добавьте информацию о себе</div>
 
-          <!-- Вкладки -->
           <div class="profile-sub-tabs">
             <button class="sub-tab active" data-subtab="info" onclick="switchProfileSubTab('info')"><i class="fas fa-user"></i> Информация</button>
             <button class="sub-tab" data-subtab="posts" onclick="switchProfileSubTab('posts')"><i class="fas fa-newspaper"></i> Посты</button>
             <button class="sub-tab" data-subtab="friends" onclick="switchProfileSubTab('friends')"><i class="fas fa-user-friends"></i> Друзья</button>
           </div>
 
-          <!-- Информация -->
           <div class="sub-tab-content active" id="subtab-info">
             <div class="info-group">
               <div class="info-row"><span class="info-label">Имя</span><span class="info-value" id="panelFullName">{{ username }}</span></div>
@@ -72,7 +69,6 @@
             </div>
           </div>
 
-          <!-- Посты -->
           <div class="sub-tab-content" id="subtab-posts">
             <div class="posts-header">
               <button class="btn-primary" onclick="openPostModal()"><i class="fas fa-plus"></i> Создать пост</button>
@@ -82,7 +78,6 @@
             </div>
           </div>
 
-          <!-- Друзья -->
           <div class="sub-tab-content" id="subtab-friends">
             <div class="friends-container">
               <div class="friends-search">
@@ -102,7 +97,6 @@
       </div>
     </div>
 
-    <!-- Нижняя навигация -->
     <div class="dock">
       <div class="dock-item active" data-panel="panel-feed"><i class="fas fa-home"></i><span>Лента</span></div>
       <div class="dock-item" data-panel="panel-chats"><i class="fas fa-comment-dots"></i><span>Чаты</span></div>
@@ -110,7 +104,6 @@
     </div>
   </div>
 
-  <!-- Модалка поста -->
   <div id="postModal" class="modal" style="display:none;">
     <div class="modal-overlay" onclick="closePostModal()"></div>
     <div class="modal-content">
