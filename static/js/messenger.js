@@ -5,6 +5,8 @@ const app = document.getElementById('app');
 let socket = null;
 let currentUser = {};
 let mediaUrl = null;
+let currentFeedIndex = 0;
+let feedPosts = [];
 
 function initApp() {
   connectSocket();
@@ -12,7 +14,6 @@ function initApp() {
   loadFriendsChats();
   loadProfileData();
   loadFeed();
-  loadCommunities();
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('feed') === 'updated') {
@@ -37,51 +38,119 @@ function initApp() {
       results.style.display = 'none';
     }
   });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' && currentFeedIndex > 0) {
+      e.preventDefault();
+      renderFeedPost(currentFeedIndex - 1);
+    } else if (e.key === 'ArrowDown' && currentFeedIndex < feedPosts.length - 1) {
+      e.preventDefault();
+      renderFeedPost(currentFeedIndex + 1);
+    }
+  });
 }
 
 function loadFeed() {
   fetch('/api/feed')
     .then(res => res.json())
     .then(posts => {
+      feedPosts = posts;
+      currentFeedIndex = 0;
       const container = document.getElementById('feedList');
       if (!container) return;
       if (!posts || posts.length === 0) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Лента пуста</div><div class="empty-text">Создайте первый пост</div></div>';
         return;
       }
-      container.innerHTML = posts.map(post => {
-        const avatarHtml = post.avatar && post.avatar.startsWith('/static/uploads/')
-          ? `<img src="${post.avatar}" alt="Avatar">`
-          : (post.avatar || '👤');
-        let mediaHtml = '';
-        if (post.media_url) {
-          if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
-            mediaHtml = `<div class="feed-media"><video controls><source src="${post.media_url}" type="video/mp4"></video></div>`;
-          } else {
-            mediaHtml = `<div class="feed-media"><img src="${post.media_url}" alt="Изображение"></div>`;
-          }
-        }
-        return `
-          <div class="feed-item">
-            <div class="feed-header">
-              <div class="feed-avatar">${avatarHtml}</div>
-              <div class="feed-author-info">
-                <div class="feed-author-name">${post.full_name || post.username}</div>
-                <div class="feed-author-username">@${post.username}</div>
-              </div>
-              <div class="feed-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
-            </div>
-            <div class="feed-content">${post.content}</div>
-            ${mediaHtml}
-            <div class="feed-actions">
-              <button onclick="likePostFeed(${post.id})" class="like-btn">❤️ ${post.likes || 0}</button>
-              <button onclick="window.location.href='/post/${post.id}'" class="comment-btn">💬 ${post.comments_count || 0}</button>
-            </div>
-          </div>
-        `;
-      }).join('');
+      renderFeedPost(0);
     })
     .catch(err => console.error('Ошибка загрузки ленты:', err));
+}
+
+function renderFeedPost(index) {
+  if (!feedPosts || feedPosts.length === 0 || index >= feedPosts.length) return;
+  const post = feedPosts[index];
+  const container = document.getElementById('feedList');
+  
+  let contentHtml = '';
+  let isMedia = false;
+  
+  if (post.media_url) {
+    isMedia = true;
+    if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
+      contentHtml = `<video class="feed-video" src="${post.media_url}" autoplay loop muted playsinline></video>`;
+    } else {
+      contentHtml = `<img class="feed-image" src="${post.media_url}" alt="Изображение">`;
+    }
+  } else {
+    contentHtml = `
+      <div class="feed-text-content">
+        <div class="feed-text-author">${post.full_name || post.username}</div>
+        <div class="feed-text-date">${post.created_at ? post.created_at.slice(0,10) : ''}</div>
+        <div class="feed-text-body">${post.content}</div>
+      </div>
+    `;
+  }
+
+  const avatarHtml = post.avatar && post.avatar.startsWith('/static/uploads/')
+    ? `<img src="${post.avatar}" alt="Avatar">`
+    : (post.avatar || '👤');
+
+  container.innerHTML = `
+    <div class="feed-wrapper ${isMedia ? 'feed-media-wrapper' : 'feed-text-wrapper'}">
+      <div class="feed-content">
+        ${isMedia ? `
+          <div class="feed-media-container">
+            <div class="feed-media-inner">
+              ${contentHtml}
+            </div>
+            <div class="feed-overlay">
+              <div class="feed-user">
+                <div class="feed-user-avatar">${avatarHtml}</div>
+                <div class="feed-user-name">${post.full_name || post.username}</div>
+              </div>
+            </div>
+          </div>
+        ` : contentHtml}
+        
+        <div class="feed-actions-bar ${isMedia ? 'feed-actions-overlay' : 'feed-actions-text'}">
+          <div class="feed-action-btn" onclick="likePostFeed(${post.id})">
+            <i class="fas fa-heart"></i>
+            <span class="feed-action-count">${post.likes || 0}</span>
+          </div>
+          <div class="feed-action-btn" onclick="window.location.href='/post/${post.id}'">
+            <i class="fas fa-comment"></i>
+            <span class="feed-action-count">${post.comments_count || 0}</span>
+          </div>
+          <div class="feed-action-btn" onclick="sharePost(${post.id})">
+            <i class="fas fa-share"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="feed-navigation">
+      <div class="feed-dots">
+        ${feedPosts.map((_, i) => `<span class="feed-dot ${i === index ? 'active' : ''}" onclick="goToFeedPost(${i})"></span>`).join('')}
+      </div>
+    </div>
+  `;
+  
+  currentFeedIndex = index;
+}
+
+function goToFeedPost(index) {
+  if (index >= 0 && index < feedPosts.length) {
+    renderFeedPost(index);
+  }
+}
+
+function sharePost(postId) {
+  const url = window.location.origin + '/post/' + postId;
+  if (navigator.share) {
+    navigator.share({ title: 'Пост в Sklay', url: url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована!')).catch(() => {});
+  }
 }
 
 function likePostFeed(postId) {
@@ -516,180 +585,4 @@ function rejectFriend(requestId) {
       }
     })
     .catch(err => console.error('Ошибка:', err));
-}
-
-function loadFriendsChats() {
-  fetch('/api/friends_with_chat')
-    .then(res => res.json())
-    .then(friends => {
-      const container = document.getElementById('friendsChatList');
-      if (!friends || friends.length === 0) {
-        container.innerHTML = '<div class="empty-state">Нет друзей для чата</div>';
-        return;
-      }
-      container.innerHTML = `
-        <div class="section-label">👥 Друзья</div>
-        ${friends.map(f => {
-          const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
-            ? `<img src="${f.avatar}" alt="Avatar">`
-            : (f.avatar || '👤');
-          return `
-            <div class="chat-item" onclick="openChatOrCreate(${f.chat_id}, '${f.username}')">
-              <div class="chat-avatar">${avatarHtml}</div>
-              <div class="chat-info">
-                <div class="chat-name">${f.full_name || f.username}</div>
-                <div class="chat-preview">${f.online ? '🟢 Онлайн' : '⚪ Не в сети'}</div>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      `;
-    })
-    .catch(err => console.error('Ошибка загрузки друзей:', err));
-}
-
-function openChatOrCreate(chatId, username) {
-  if (chatId) {
-    window.location.href = `/chat/${chatId}`;
-  } else {
-    fetch('/api/create_chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.chat_id) {
-        window.location.href = `/chat/${data.chat_id}`;
-      } else {
-        alert('Ошибка создания чата');
-      }
-    })
-    .catch(err => alert('Ошибка: ' + err));
-  }
-}
-
-function connectSocket() {
-  socket = io();
-  socket.on('connect', () => console.log('✅ WebSocket подключен'));
-  socket.on('new_message', () => {
-    loadChats();
-  });
-}
-
-function loadChats() {
-  fetch('/api/chats')
-    .then(res => res.json())
-    .then(chats => {
-      const container = document.getElementById('chatList');
-      if (!chats || chats.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-        return;
-      }
-      const privateChats = chats.filter(c => c.type === 'private');
-      const groupChats = chats.filter(c => c.type === 'group');
-      let html = '';
-      if (privateChats.length > 0) {
-        html += `<div class="section-label">👤 Личные чаты</div>`;
-        html += privateChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
-            <div class="chat-avatar">👤</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || 'Личный чат'}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join('');
-      }
-      if (groupChats.length > 0) {
-        html += `<div class="section-label">👥 Групповые чаты</div>`;
-        html += groupChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
-            <div class="chat-avatar">👥</div>
-            <div class="chat-info">
-              <div class="chat-name">${chat.name || 'Групповой чат'}</div>
-              <div class="chat-preview">${chat.member_count || 0} участников</div>
-            </div>
-            <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
-          </div>
-        `).join('');
-      }
-      container.innerHTML = html || `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет чатов</div><div class="empty-text">Начните общение</div></div>`;
-    })
-    .catch(err => console.error('Ошибка загрузки чатов:', err));
-}
-
-function openChat(chatId) {
-  window.location.href = `/chat/${chatId}`;
-}
-
-function createGroup() {
-  const name = prompt('Название группы:');
-  if (!name || !name.trim()) return;
-  const membersInput = prompt('Участники через запятую (минимум 2):');
-  if (!membersInput || !membersInput.trim()) return;
-  const members = membersInput.split(',').map(m => m.trim()).filter(m => m);
-  if (members.length < 2) {
-    alert('Нужно минимум 2 участника');
-    return;
-  }
-  fetch('/api/create_group', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name.trim(), members: members })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.chat_id) {
-      loadChats();
-      openChat(data.chat_id);
-    } else {
-      alert(data.error || 'Ошибка создания группы');
-    }
-  })
-  .catch(err => console.error('Ошибка:', err));
-}
-
-const dockItems = document.querySelectorAll('.dock-item');
-const panels = {
-  'panel-feed': document.getElementById('panel-feed'),
-  'panel-chats': document.getElementById('panel-chats'),
-  'panel-profile': document.getElementById('panel-profile')
-};
-
-dockItems.forEach(item => {
-  item.addEventListener('click', function() {
-    dockItems.forEach(d => d.classList.remove('active'));
-    this.classList.add('active');
-    Object.values(panels).forEach(p => p.classList.remove('active'));
-    const panelId = this.dataset.panel;
-    if (panels[panelId]) {
-      panels[panelId].classList.add('active');
-    }
-  });
-});
-
-const splashShown = sessionStorage.getItem('splash_shown');
-if (splashShown) {
-  splash.style.display = 'none';
-  app.classList.add('app-visible');
-  initApp();
-} else {
-  const messages = ['Создаем пространство...', 'Настраиваем безопасность...', 'Почти готово...'];
-  let msgIndex = 0;
-  const msgInterval = setInterval(() => {
-    msgIndex++;
-    if (msgIndex < messages.length) {
-      splashMessage.textContent = messages[msgIndex];
-    } else {
-      clearInterval(msgInterval);
-      setTimeout(() => {
-        splash.classList.add('splash-hidden');
-        app.classList.add('app-visible');
-        sessionStorage.setItem('splash_shown', 'true');
-        initApp();
-      }, 600);
-    }
-  }, 1200);
 }
