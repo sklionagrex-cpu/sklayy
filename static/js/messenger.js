@@ -678,20 +678,20 @@ function sendFriendRequest(username) {
 }
 
 function openChatWith(username) {
-  fetch('/api/create_chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  fetch("/api/create_chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: username })
   })
   .then(res => res.json())
   .then(data => {
     if (data.chat_id) {
-      window.location.href = '/chat/' + data.chat_id;
+      window.location.href = "/chat/" + data.chat_id;
     } else {
-      alert('Ошибка создания чата');
+      alert("Ошибка создания чата");
     }
   })
-  .catch(err => alert('Ошибка: ' + err));
+  .catch(err => alert("Ошибка: " + err));
 }
 
 function addFriend() {
@@ -806,7 +806,7 @@ function loadChats() {
 }
 
 function openChat(chatId) {
-  window.location.href = `/chat/${chatId}`;
+  window.location.href = "/chat/" + chatId;
 }
 
 function createGroup() {
