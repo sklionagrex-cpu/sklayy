@@ -7,200 +7,204 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Inter',sans-serif; background:#0b0b0f; color:#f0f0f5; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-    .header { display:flex; align-items:center; gap:12px; padding:10px 16px; background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
-    .back { color:#f0f0f5; text-decoration:none; font-size:20px; padding:4px 8px; border-radius:8px; }
-    .back:hover { background:rgba(255,255,255,0.05); }
-    .user { display:flex; align-items:center; gap:10px; flex:1; }
-    .avatar { width:38px; height:38px; border-radius:50%; background:rgba(91,108,255,0.15); display:flex; align-items:center; justify-content:center; font-size:18px; overflow:hidden; flex-shrink:0; }
-    .avatar img { width:100%; height:100%; object-fit:cover; }
-    .name { font-weight:600; font-size:15px; }
-    .status { font-size:12px; color:#888; }
-    .messages { flex:1; overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:4px; }
-    .messages::-webkit-scrollbar { width:3px; }
-    .messages::-webkit-scrollbar-thumb { background:rgba(91,108,255,0.3); border-radius:10px; }
-    .msg { max-width:80%; padding:8px 14px; border-radius:16px; font-size:14px; line-height:1.5; word-wrap:break-word; animation:fadeIn 0.15s ease; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
-    .msg.mine { align-self:flex-end; background:#5B6CFF; border-bottom-right-radius:4px; }
-    .msg.other { align-self:flex-start; background:rgba(255,255,255,0.06); border-bottom-left-radius:4px; }
-    .msg .sender { font-size:12px; font-weight:600; color:#5B6CFF; margin-bottom:2px; }
-    .msg .time { font-size:10px; opacity:0.5; margin-top:4px; display:block; text-align:right; }
-    .msg .file { display:block; margin-top:4px; max-width:200px; border-radius:8px; overflow:hidden; }
-    .msg .file img { width:100%; border-radius:8px; max-height:300px; object-fit:cover; }
-    .msg .file video { width:100%; border-radius:8px; max-height:300px; }
-    .input-area { display:flex; gap:8px; padding:10px 16px; background:rgba(255,255,255,0.02); border-top:1px solid rgba(255,255,255,0.06); flex-shrink:0; align-items:flex-end; }
-    .input-area textarea { flex:1; padding:8px 14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#f0f0f5; font-family:'Inter',sans-serif; font-size:14px; resize:none; outline:none; min-height:36px; max-height:100px; transition:border 0.3s; }
-    .input-area textarea:focus { border-color:#5B6CFF; background:rgba(255,255,255,0.08); }
-    .input-area .btn { background:none; border:none; color:#888; font-size:18px; cursor:pointer; padding:6px; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
-    .input-area .btn:hover { background:rgba(255,255,255,0.05); color:#f0f0f5; }
-    .input-area .send { background:#5B6CFF; color:#fff; border:none; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
-    .input-area .send:hover { transform:scale(1.05); box-shadow:0 0 20px rgba(91,108,255,0.3); }
-    #fileInput { display:none; }
-    .empty { text-align:center; color:#666; padding:40px 20px; margin:auto; }
-    .empty .icon { font-size:40px; margin-bottom:10px; opacity:0.3; }
-    .empty .title { font-size:16px; color:#888; }
-    .empty .sub { font-size:13px; color:#555; margin-top:4px; }
-  </style>
 </head>
 <body>
-<div class="header">
-  <a href="/app" class="back"><i class="fas fa-arrow-left"></i></a>
-  <div class="user">
-    <div class="avatar" id="chatAvatar">👤</div>
-    <div>
-      <div class="name" id="chatTitle">{{ chat_name }}</div>
-      <div class="status" id="chatStatus">онлайн</div>
+<div class="chat-container">
+  <div class="chat-header">
+    <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <div class="chat-user">
+      <div class="chat-avatar" id="chatAvatar">👤</div>
+      <div>
+        <div class="chat-name" id="chatTitle">{{ chat_name }}</div>
+        <div class="chat-status" id="chatStatus">Онлайн</div>
+      </div>
     </div>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    <div id="messagesContainer">
+      <div class="empty-chat">
+        <div class="empty-icon">💬</div>
+        <div class="empty-text">Нет сообщений</div>
+        <div class="empty-sub">Напишите первое сообщение</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input">
+    <button class="attach-btn" onclick="document.getElementById('fileInput').click()">
+      <i class="fas fa-paperclip"></i>
+    </button>
+    <input type="file" id="fileInput" accept="image/*,video/*" style="display:none" onchange="uploadFile(this)">
+    <textarea id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+    <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
   </div>
 </div>
 
-<div class="messages" id="chatMessages">
-  <div id="messagesContainer">
-    <div class="empty">
-      <div class="icon">💬</div>
-      <div class="title">Нет сообщений</div>
-      <div class="sub">Напишите первое сообщение</div>
-    </div>
-  </div>
-</div>
-
-<div class="input-area">
-  <button class="btn" onclick="document.getElementById('fileInput').click()" title="Прикрепить файл">
-    <i class="fas fa-paperclip"></i>
-  </button>
-  <input type="file" id="fileInput" accept="image/*,video/*" onchange="uploadFile(this)">
-  <textarea id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-  <button class="send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
-</div>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:#0b0b0f; color:#f0f0f5; height:100vh; display:flex; align-items:center; justify-content:center; }
+.chat-container { width:100%; max-width:600px; height:100vh; display:flex; flex-direction:column; background:#0b0b0f; margin:0 auto; }
+.chat-header { display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+.back-btn { color:#f0f0f5; text-decoration:none; font-size:20px; padding:4px 8px; border-radius:8px; }
+.back-btn:hover { background:rgba(255,255,255,0.05); }
+.chat-user { display:flex; align-items:center; gap:10px; flex:1; }
+.chat-avatar { width:36px; height:36px; border-radius:50%; background:rgba(91,108,255,0.15); display:flex; align-items:center; justify-content:center; font-size:18px; overflow:hidden; flex-shrink:0; }
+.chat-avatar img { width:100%; height:100%; object-fit:cover; }
+.chat-name { font-weight:600; font-size:15px; }
+.chat-status { font-size:12px; color:#888; }
+.chat-messages { flex:1; overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:4px; }
+.chat-messages::-webkit-scrollbar { width:3px; }
+.chat-messages::-webkit-scrollbar-thumb { background:rgba(91,108,255,0.3); border-radius:10px; }
+.message { max-width:80%; padding:8px 14px; border-radius:16px; font-size:14px; line-height:1.5; word-wrap:break-word; animation:fadeIn 0.15s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+.message.mine { align-self:flex-end; background:#5B6CFF; border-bottom-right-radius:4px; }
+.message.other { align-self:flex-start; background:rgba(255,255,255,0.06); border-bottom-left-radius:4px; }
+.message .sender { font-size:12px; font-weight:600; color:#5B6CFF; margin-bottom:2px; }
+.message .time { font-size:10px; opacity:0.5; margin-top:4px; display:block; text-align:right; }
+.message .file { display:block; margin-top:4px; max-width:200px; border-radius:8px; overflow:hidden; }
+.message .file img { width:100%; border-radius:8px; max-height:300px; object-fit:cover; }
+.message .file video { width:100%; border-radius:8px; max-height:300px; }
+.chat-input { display:flex; gap:8px; padding:10px 16px; background:rgba(255,255,255,0.02); border-top:1px solid rgba(255,255,255,0.06); flex-shrink:0; align-items:flex-end; }
+.chat-input textarea { flex:1; padding:8px 14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#f0f0f5; font-family:'Inter',sans-serif; font-size:14px; resize:none; outline:none; min-height:36px; max-height:100px; transition:border 0.3s; }
+.chat-input textarea:focus { border-color:#5B6CFF; background:rgba(255,255,255,0.08); }
+.chat-input .attach-btn { background:none; border:none; color:#888; font-size:18px; cursor:pointer; padding:6px; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.chat-input .attach-btn:hover { background:rgba(255,255,255,0.05); color:#f0f0f5; }
+.chat-input .send-btn { background:#5B6CFF; color:#fff; border:none; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }
+.chat-input .send-btn:hover { transform:scale(1.05); box-shadow:0 0 20px rgba(91,108,255,0.3); }
+#fileInput { display:none; }
+.empty-chat { text-align:center; color:#666; padding:40px 20px; margin:auto; }
+.empty-icon { font-size:40px; margin-bottom:10px; opacity:0.3; }
+.empty-text { font-size:16px; color:#888; }
+.empty-sub { font-size:13px; color:#555; margin-top:4px; }
+</style>
 
 <script>
-  const chatId = {{ chat.id }};
-  const currentUserId = {{ session['user_id'] }};
-  let socket = null;
+const chatId = {{ chat.id }};
+const currentUserId = {{ session['user_id'] }};
+let socket = null;
 
-  function loadUserInfo() {
-    fetch('/api/chat_users/' + chatId)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.username) {
-          document.getElementById('chatTitle').textContent = data.full_name || data.username;
-          const avatarEl = document.getElementById('chatAvatar');
-          if (data.avatar && data.avatar.startsWith('/static/uploads/')) {
-            avatarEl.innerHTML = '<img src="' + data.avatar + '" alt="Avatar">';
-          } else {
-            avatarEl.textContent = data.avatar || '👤';
-          }
-          document.getElementById('chatStatus').textContent = data.online ? '🟢 Онлайн' : '⚪ Не в сети';
-        }
-      })
-      .catch(err => console.error('Ошибка загрузки пользователя:', err));
-  }
-
-  function connectSocket() {
-    socket = io();
-    socket.on('connect', () => {
-      console.log('WebSocket подключен');
-      socket.emit('join_chat', { chat_id: chatId });
-    });
-    socket.on('new_message', (data) => {
-      if (data.chat_id == chatId) addMessage(data);
-    });
-  }
-
-  function loadMessages() {
-    fetch('/api/messages/' + chatId)
-      .then(res => res.json())
-      .then(messages => {
-        const container = document.getElementById('messagesContainer');
-        if (!messages || messages.length === 0) {
-          container.innerHTML = '<div class="empty"><div class="icon">💬</div><div class="title">Нет сообщений</div><div class="sub">Напишите первое сообщение</div></div>';
-          return;
-        }
-        container.innerHTML = messages.map(msg => {
-          const isMine = msg.user_id == currentUserId;
-          let fileHtml = '';
-          if (msg.file_url) {
-            if (msg.file_url.match(/\.(mp4|webm|ogg)$/i)) {
-              fileHtml = '<div class="file"><video controls><source src="' + msg.file_url + '" type="video/mp4"></video></div>';
-            } else {
-              fileHtml = '<div class="file"><img src="' + msg.file_url + '" alt="Изображение"></div>';
-            }
-          }
-          return '<div class="msg ' + (isMine ? 'mine' : 'other') + '">' +
-            (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
-            (msg.content || '') + fileHtml +
-            '<span class="time">' + new Date(msg.created_at).toLocaleTimeString() + '</span>' +
-            '</div>';
-        }).join('');
-        scrollToBottom();
-      })
-      .catch(err => console.error('Ошибка загрузки сообщений:', err));
-  }
-
-  function sendMessage() {
-    const input = document.getElementById('messageInput');
-    const content = input.value.trim();
-    if (!content) return;
-    socket.emit('send_message', { chat_id: chatId, content: content });
-    input.value = '';
-    input.style.height = 'auto';
-  }
-
-  function uploadFile(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('media', file);
-    fetch('/api/upload_media', {
-      method: 'POST',
-      body: formData
-    })
+function loadUserInfo() {
+  fetch('/api/chat_users/' + chatId)
     .then(res => res.json())
     .then(data => {
-      if (data.url) {
-        socket.emit('send_message', { chat_id: chatId, content: '📎 Файл', file_url: data.url });
+      if (data && data.username) {
+        document.getElementById('chatTitle').textContent = data.full_name || data.username;
+        const avatarEl = document.getElementById('chatAvatar');
+        if (data.avatar && data.avatar.startsWith('/static/uploads/')) {
+          avatarEl.innerHTML = '<img src="' + data.avatar + '" alt="Avatar">';
+        } else {
+          avatarEl.textContent = data.avatar || '👤';
+        }
+        document.getElementById('chatStatus').textContent = data.online ? '🟢 Онлайн' : '⚪ Не в сети';
       }
     })
-    .catch(err => console.error('Ошибка загрузки файла:', err));
-    input.value = '';
-  }
+    .catch(err => console.error('Ошибка загрузки пользователя:', err));
+}
 
-  function addMessage(msg) {
-    const container = document.getElementById('messagesContainer');
-    const empty = container.querySelector('.empty');
-    if (empty) container.innerHTML = '';
-    const isMine = msg.user_id == currentUserId;
-    let fileHtml = '';
-    if (msg.file_url) {
-      if (msg.file_url.match(/\.(mp4|webm|ogg)$/i)) {
-        fileHtml = '<div class="file"><video controls><source src="' + msg.file_url + '" type="video/mp4"></video></div>';
-      } else {
-        fileHtml = '<div class="file"><img src="' + msg.file_url + '" alt="Изображение"></div>';
-      }
-    }
-    container.insertAdjacentHTML('beforeend', '<div class="msg ' + (isMine ? 'mine' : 'other') + '">' +
-      (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
-      (msg.content || '') + fileHtml +
-      '<span class="time">' + new Date(msg.created_at).toLocaleTimeString() + '</span>' +
-      '</div>');
-    scrollToBottom();
-  }
-
-  function scrollToBottom() {
-    const container = document.getElementById('chatMessages');
-    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
-  }
-
-  document.getElementById('messageInput').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
+function connectSocket() {
+  socket = io();
+  socket.on('connect', () => {
+    console.log('WebSocket подключен');
+    socket.emit('join_chat', { chat_id: chatId });
   });
+  socket.on('new_message', (data) => {
+    if (data.chat_id == chatId) addMessage(data);
+  });
+}
 
-  loadUserInfo();
-  connectSocket();
-  loadMessages();
+function loadMessages() {
+  fetch('/api/messages/' + chatId)
+    .then(res => res.json())
+    .then(messages => {
+      const container = document.getElementById('messagesContainer');
+      if (!messages || messages.length === 0) {
+        container.innerHTML = '<div class="empty-chat"><div class="empty-icon">💬</div><div class="empty-text">Нет сообщений</div><div class="empty-sub">Напишите первое сообщение</div></div>';
+        return;
+      }
+      container.innerHTML = messages.map(msg => {
+        const isMine = msg.user_id == currentUserId;
+        let fileHtml = '';
+        if (msg.file_url) {
+          if (msg.file_url.match(/\.(mp4|webm|ogg)$/i)) {
+            fileHtml = '<div class="file"><video controls><source src="' + msg.file_url + '" type="video/mp4"></video></div>';
+          } else {
+            fileHtml = '<div class="file"><img src="' + msg.file_url + '" alt="Изображение"></div>';
+          }
+        }
+        return '<div class="message ' + (isMine ? 'mine' : 'other') + '">' +
+          (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
+          (msg.content || '') + fileHtml +
+          '<span class="time">' + new Date(msg.created_at).toLocaleTimeString() + '</span>' +
+          '</div>';
+      }).join('');
+      scrollToBottom();
+    })
+    .catch(err => console.error('Ошибка загрузки сообщений:', err));
+}
+
+function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const content = input.value.trim();
+  if (!content) return;
+  socket.emit('send_message', { chat_id: chatId, content: content });
+  input.value = '';
+  input.style.height = 'auto';
+}
+
+function uploadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('media', file);
+  fetch('/api/upload_media', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.url) {
+      socket.emit('send_message', { chat_id: chatId, content: '📎 Файл', file_url: data.url });
+    }
+  })
+  .catch(err => console.error('Ошибка загрузки файла:', err));
+  input.value = '';
+}
+
+function addMessage(msg) {
+  const container = document.getElementById('messagesContainer');
+  const empty = container.querySelector('.empty-chat');
+  if (empty) container.innerHTML = '';
+  const isMine = msg.user_id == currentUserId;
+  let fileHtml = '';
+  if (msg.file_url) {
+    if (msg.file_url.match(/\.(mp4|webm|ogg)$/i)) {
+      fileHtml = '<div class="file"><video controls><source src="' + msg.file_url + '" type="video/mp4"></video></div>';
+    } else {
+      fileHtml = '<div class="file"><img src="' + msg.file_url + '" alt="Изображение"></div>';
+    }
+  }
+  container.insertAdjacentHTML('beforeend', '<div class="message ' + (isMine ? 'mine' : 'other') + '">' +
+    (!isMine ? '<div class="sender">' + (msg.full_name || msg.username) + '</div>' : '') +
+    (msg.content || '') + fileHtml +
+    '<span class="time">' + new Date(msg.created_at).toLocaleTimeString() + '</span>' +
+    '</div>');
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  const container = document.getElementById('chatMessages');
+  setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+}
+
+document.getElementById('messageInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = this.scrollHeight + 'px';
+});
+
+loadUserInfo();
+connectSocket();
+loadMessages();
 </script>
 </body>
 </html>
