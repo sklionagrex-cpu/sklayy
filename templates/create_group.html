@@ -89,6 +89,9 @@
       font-size: 14px;
       transition: all 0.2s;
       font-family: 'Inter', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .add-btn:hover {
       background: rgba(255,255,255,0.1);
@@ -117,8 +120,6 @@
       cursor: not-allowed;
       transform: none;
     }
-
-    /* ===== ОКНО ВЫБОРА ДРУЗЕЙ ===== */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -189,7 +190,7 @@
       padding: 10px 12px;
       border-radius: 10px;
       transition: background 0.2s;
-      cursor: pointer;
+      cursor: default;
     }
     .modal-list .friend-item:hover {
       background: rgba(255,255,255,0.04);
@@ -241,11 +242,6 @@
     .modal-list .friend-add.added {
       background: #ff6b6b;
     }
-    .empty-state {
-      text-align: center;
-      color: #666;
-      padding: 30px 20px;
-    }
     .modal-footer {
       margin-top: 12px;
       padding-top: 12px;
@@ -267,6 +263,11 @@
     .modal-footer .done-btn:hover {
       opacity: 0.9;
     }
+    .empty-state {
+      text-align: center;
+      color: #666;
+      padding: 30px 20px;
+    }
   </style>
 </head>
 <body>
@@ -274,13 +275,11 @@
 <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i> Назад</a>
 <h1 class="page-title">👥 Создать группу</h1>
 
-<!-- Шаг 1: Название группы -->
 <div class="form-group">
   <label>Название группы</label>
   <input type="text" id="groupNameInput" placeholder="Введите название...">
 </div>
 
-<!-- Шаг 2: Выбранные участники -->
 <div class="form-group">
   <label>Участники</label>
   <div class="selected-members" id="selectedMembers">
@@ -290,10 +289,8 @@
   </div>
 </div>
 
-<!-- Шаг 3: Кнопка создания -->
 <button class="btn-create" id="createGroupBtn" disabled>Создать группу</button>
 
-<!-- ===== МОДАЛКА ВЫБОРА ДРУЗЕЙ ===== -->
 <div class="modal-overlay" id="membersModal">
   <div class="modal-window">
     <div class="modal-header">
@@ -311,33 +308,37 @@
 </div>
 
 <script>
-// ===== СОСТОЯНИЕ =====
-let selectedMembers = []; // { id, username, fullName, avatar }
+let selectedMembers = [];
 let allFriends = [];
 
-// ===== ЗАГРУЗКА ДРУЗЕЙ =====
 function loadFriends() {
   const container = document.getElementById('modalFriendsList');
   container.innerHTML = '<div class="empty-state">⏳ Загрузка...</div>';
   
   fetch('/api/friends')
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(friends => {
-      allFriends = friends;
+      console.log('✅ Друзья загружены:', friends);
+      allFriends = friends || [];
       renderFriendList();
     })
     .catch(err => {
-      console.error('Ошибка загрузки друзей:', err);
+      console.error('❌ Ошибка загрузки друзей:', err);
       container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки</div>';
     });
 }
 
 function renderFriendList(filter = '') {
   const container = document.getElementById('modalFriendsList');
-  const filtered = allFriends.filter(f => 
-    (f.full_name || f.username).toLowerCase().includes(filter.toLowerCase()) ||
-    f.username.toLowerCase().includes(filter.toLowerCase())
-  );
+  const filtered = allFriends.filter(f => {
+    const name = (f.full_name || f.username || '').toLowerCase();
+    const username = (f.username || '').toLowerCase();
+    const q = filter.toLowerCase();
+    return name.includes(q) || username.includes(q);
+  });
   
   if (filtered.length === 0) {
     container.innerHTML = '<div class="empty-state">Нет друзей</div>';
@@ -368,7 +369,6 @@ function filterFriends(value) {
   renderFriendList(value);
 }
 
-// ===== ДОБАВЛЕНИЕ/УДАЛЕНИЕ УЧАСТНИКА =====
 function toggleMember(id, username, fullName, avatar) {
   const index = selectedMembers.findIndex(m => m.id === id);
   if (index > -1) {
@@ -409,7 +409,6 @@ function removeMember(id) {
   selectedMembers = selectedMembers.filter(m => m.id !== id);
   updateSelectedMembersUI();
   updateCreateButton();
-  // Обновляем модалку, если она открыта
   if (document.getElementById('membersModal').classList.contains('active')) {
     renderFriendList(document.getElementById('memberSearch').value);
   }
@@ -421,7 +420,6 @@ function updateCreateButton() {
   btn.disabled = !(name && selectedMembers.length >= 2);
 }
 
-// ===== ОТКРЫТИЕ/ЗАКРЫТИЕ МОДАЛКИ =====
 function openAddMembers() {
   document.getElementById('membersModal').classList.add('active');
   document.getElementById('memberSearch').value = '';
@@ -432,7 +430,6 @@ function closeAddMembers() {
   document.getElementById('membersModal').classList.remove('active');
 }
 
-// ===== СОЗДАНИЕ ГРУППЫ =====
 document.getElementById('createGroupBtn').addEventListener('click', function() {
   const name = document.getElementById('groupNameInput').value.trim();
   if (!name) { alert('Введите название группы'); return; }
@@ -455,10 +452,8 @@ document.getElementById('createGroupBtn').addEventListener('click', function() {
   .catch(err => alert('Ошибка: ' + err));
 });
 
-// ===== ОТСЛЕЖИВАЕМ ИЗМЕНЕНИЕ НАЗВАНИЯ =====
 document.getElementById('groupNameInput').addEventListener('input', updateCreateButton);
 
-// ===== ЗАГРУЖАЕМ ДРУЗЕЙ ПРИ СТАРТЕ =====
 document.addEventListener('DOMContentLoaded', function() {
   loadFriends();
   updateSelectedMembersUI();

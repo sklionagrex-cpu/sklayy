@@ -131,7 +131,6 @@
   </div>
 
   <script src="/static/js/messenger.js"></script>
-<script src="/static/js/group_create.js"></script>
 </body>
 </html>
 <script src="/static/js/fix_splash.js"></script>
@@ -155,7 +154,6 @@
     <div id="selectedMembers" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
     
     <!-- Кнопка создания -->
-    <button id="createGroupBtn" style="width:100%;padding:14px;border:none;border-radius:12px;background:#5B6CFF;color:#fff;font-weight:600;font-size:16px;cursor:pointer;transition:all 0.2s;">Создать группу</button>
   </div>
 </div>
 
@@ -170,16 +168,13 @@
       <div id="groupFriendsList" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
     </div>
     <div id="selectedMembers" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
-    <button id="createGroupBtn" style="width:100%;padding:14px;border:none;border-radius:12px;background:#5B6CFF;color:#fff;font-weight:600;font-size:16px;cursor:pointer;transition:all 0.2s;">Создать группу</button>
   </div>
 </div>
 
 <!-- МОДАЛКА СОЗДАНИЯ ГРУППЫ -->
-<div id="groupModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
   <div style="background:#1a1a24;border-radius:20px;padding:24px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.06);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <h3 style="font-weight:600;font-size:20px;color:#f0f0f5;">Новая группа</h3>
-      <button onclick="document.getElementById('groupModal').style.display='none'" style="background:none;border:none;color:#888;font-size:24px;cursor:pointer;">✕</button>
     </div>
     
     <!-- Название группы -->
@@ -195,6 +190,5 @@
     <div id="selectedMembers" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;min-height:30px;"></div>
     
     <!-- Кнопка создания -->
-    <button id="createGroupBtn" style="width:100%;padding:14px;border:none;border-radius:12px;background:#5B6CFF;color:#fff;font-weight:600;font-size:16px;cursor:pointer;transition:all 0.2s;">Создать группу</button>
   </div>
 </div>
