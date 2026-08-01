@@ -610,35 +610,6 @@ def delete_chat_both(chat_id):
         conn.close()
         return jsonify({'error': 'Only private chats can be deleted for both'}), 400
 
-@socketio.on('send_message')
-def handle_send_message(data):
-    chat_id = data.get('chat_id')
-    content = data.get('content')
-    file_url = data.get('file_url')
-    user_id = session.get('user_id')
-    if not user_id or not chat_id:
-        return
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        'INSERT INTO messages (chat_id, user_id, content, file_url, created_at) VALUES (?, ?, ?, ?, ?)',
-        (chat_id, user_id, content, file_url, datetime.now().isoformat())
-    )
-    msg_id = cursor.lastrowid
-    conn.commit()
-    
-    # Увеличиваем счётчик непрочитанных для всех участников, кроме отправителя
-    cursor.execute('UPDATE chat_members SET unread_count = unread_count + 1 WHERE chat_id = ? AND user_id != ?', (chat_id, user_id))
-    conn.commit()
-    
-    msg = conn.execute('
-        SELECT m.*, u.username, u.full_name
-        FROM messages m JOIN users u ON m.user_id = u.id
-        WHERE m.id = ?
-    ', (msg_id,)).fetchone()
-    conn.close()
-    emit('new_message', dict(msg), room=f'chat_{chat_id}')
-
 @socketio.on('join_chat')
 def handle_join_chat(data):
     join_room(f'chat_{data.get("chat_id")}')
@@ -751,3 +722,27 @@ def mark_chat_read(chat_id):
     conn.close()
     
     return jsonify({'success': True})
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    chat_id = data.get('chat_id')
+    content = data.get('content')
+    file_url = data.get('file_url')
+    user_id = session.get('user_id')
+    if not user_id or not chat_id:
+        return
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO messages (chat_id, user_id, content, file_url, created_at) VALUES (?, ?, ?, ?, ?)',
+        (chat_id, user_id, content, file_url, datetime.now().isoformat())
+    )
+    msg_id = cursor.lastrowid
+    conn.commit()
+    msg = conn.execute('''
+        SELECT m.*, u.username, u.full_name
+        FROM messages m JOIN users u ON m.user_id = u.id
+        WHERE m.id = ?
+    ''', (msg_id,)).fetchone()
+    conn.close()
+    emit('new_message', dict(msg), room=f'chat_{chat_id}')
