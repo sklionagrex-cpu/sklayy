@@ -4,7 +4,11 @@ let selectedGroupMembers = [];
 function openGroupModal() {
   console.log('📢 openGroupModal вызвана');
   const modal = document.getElementById('groupModal');
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.display = 'flex';  // <-- ГЛАВНОЕ: flex, а не block!
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+  }
   
   const nameInput = document.getElementById('groupNameInput');
   if (nameInput) nameInput.value = '';
@@ -14,7 +18,7 @@ function openGroupModal() {
   const selectedContainer = document.getElementById('selectedMembers');
   if (selectedContainer) selectedContainer.innerHTML = '<div style="color:#666;font-size:14px;">Никто не выбран</div>';
   
-  // ГАРАНТИРОВАННО загружаем друзей
+  // Загружаем друзей
   setTimeout(function() {
     loadGroupFriendsList();
   }, 100);
