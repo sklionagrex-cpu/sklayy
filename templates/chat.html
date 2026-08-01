@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <style>
+    /* СБРОС */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
@@ -15,9 +16,10 @@
       color: #f0f0f5;
       height: 100vh;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
     .chat-container {
       display: flex;
       flex-direction: column;
@@ -26,7 +28,7 @@
       background: #0b0b0f;
     }
 
-    /* ===== ШАПКА (Telegram-стиль) ===== */
+    /* ШАПКА */
     .chat-header {
       display: flex;
       align-items: center;
@@ -39,7 +41,6 @@
       z-index: 10;
       min-height: 56px;
     }
-
     .back-btn {
       color: #f0f0f5;
       text-decoration: none;
@@ -54,43 +55,29 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    .back-btn:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
+    .back-btn:hover { background: rgba(255,255,255,0.05); }
     .chat-user {
       display: flex;
       align-items: center;
       gap: 12px;
       flex: 1;
-      cursor: pointer;
       min-width: 0;
     }
-
     .chat-avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(91, 108, 255, 0.3), rgba(91, 108, 255, 0.1));
+      background: linear-gradient(135deg, rgba(91,108,255,0.3), rgba(91,108,255,0.1));
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       overflow: hidden;
       flex-shrink: 0;
-      border: 2px solid rgba(91, 108, 255, 0.15);
-      position: relative;
+      border: 2px solid rgba(91,108,255,0.15);
     }
-    .chat-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .chat-info {
-      flex: 1;
-      min-width: 0;
-    }
+    .chat-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .chat-info { flex: 1; min-width: 0; }
     .chat-name {
       font-weight: 600;
       font-size: 16px;
@@ -112,40 +99,10 @@
       height: 7px;
       border-radius: 50%;
     }
-    .chat-status .dot.online {
-      background: #4ade80;
-      box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
-    }
-    .chat-status .dot.offline {
-      background: #666;
-    }
+    .chat-status .dot.online { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.4); }
+    .chat-status .dot.offline { background: #666; }
 
-    .chat-header-actions {
-      display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .chat-header-actions button {
-      background: transparent;
-      border: none;
-      color: #888;
-      font-size: 18px;
-      padding: 6px;
-      cursor: pointer;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .chat-header-actions button:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: #f0f0f5;
-    }
-
-    /* ===== ОБЛАСТЬ СООБЩЕНИЙ ===== */
+    /* СООБЩЕНИЯ */
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -153,20 +110,13 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
-      background: radial-gradient(ellipse at 30% 20%, rgba(91, 108, 255, 0.02) 0%, transparent 70%);
+      background: radial-gradient(ellipse at 30% 20%, rgba(91,108,255,0.02) 0%, transparent 70%);
     }
-    .chat-messages::-webkit-scrollbar {
-      width: 4px;
-    }
-    .chat-messages::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .chat-messages::-webkit-scrollbar-thumb {
-      background: rgba(91, 108, 255, 0.3);
-      border-radius: 10px;
-    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(91,108,255,0.3); border-radius: 10px; }
 
-    /* ===== СООБЩЕНИЯ (Telegram-стиль) ===== */
+    /* СООБЩЕНИЯ */
     .message {
       max-width: 80%;
       padding: 7px 14px;
@@ -182,7 +132,6 @@
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     .message.mine {
       align-self: flex-end;
       background: #5B6CFF;
@@ -191,11 +140,10 @@
     }
     .message.other {
       align-self: flex-start;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255,255,255,0.06);
       border-bottom-left-radius: 4px;
       color: #f0f0f5;
     }
-
     .message .sender {
       font-size: 12px;
       font-weight: 600;
@@ -210,7 +158,6 @@
       color: #888;
       font-size: 10px;
     }
-
     .message .time {
       font-size: 10px;
       opacity: 0.5;
@@ -218,7 +165,6 @@
       display: block;
       text-align: right;
     }
-
     .message .file {
       display: block;
       margin-top: 4px;
@@ -246,22 +192,9 @@
       padding: 60px 20px;
       margin: auto;
     }
-    .empty-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-      opacity: 0.2;
-      display: block;
-    }
-    .empty-text {
-      font-size: 18px;
-      font-weight: 500;
-      color: #888;
-      margin-bottom: 4px;
-    }
-    .empty-sub {
-      font-size: 14px;
-      color: #555;
-    }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.2; display: block; }
+    .empty-text { font-size: 18px; font-weight: 500; color: #888; margin-bottom: 4px; }
+    .empty-sub { font-size: 14px; color: #555; }
 
     .date-divider {
       text-align: center;
@@ -270,17 +203,17 @@
       padding: 8px 0 12px;
     }
     .date-divider span {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255,255,255,0.03);
       padding: 4px 16px;
       border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255,255,255,0.04);
       font-size: 12px;
       color: #888;
     }
 
-    /* ===== НИЖНЯЯ ПАНЕЛЬ ВВОДА (Telegram-стиль) ===== */
+    /* ПАНЕЛЬ ВВОДА (принудительно видима) */
     .chat-input-area {
-      display: flex;
+      display: flex !important;
       align-items: flex-end;
       gap: 8px;
       padding: 8px 12px 12px;
@@ -288,23 +221,24 @@
       backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255, 255, 255, 0.04);
       flex-shrink: 0;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
-
     .input-wrapper {
       flex: 1;
-      display: flex;
+      display: flex !important;
       align-items: flex-end;
       background: rgba(255, 255, 255, 0.04);
       border-radius: 24px;
       border: 1px solid rgba(255, 255, 255, 0.06);
       padding: 4px 4px 4px 16px;
       transition: border 0.2s, background 0.2s;
+      visibility: visible !important;
     }
     .input-wrapper:focus-within {
-      border-color: rgba(91, 108, 255, 0.3);
-      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(91,108,255,0.3);
+      background: rgba(255,255,255,0.06);
     }
-
     .input-wrapper textarea {
       flex: 1;
       padding: 8px 4px 8px 0;
@@ -318,17 +252,18 @@
       min-height: 36px;
       max-height: 120px;
       line-height: 1.5;
+      display: block !important;
+      visibility: visible !important;
     }
-    .input-wrapper textarea::placeholder {
-      color: #666;
-    }
+    .input-wrapper textarea::placeholder { color: #666; }
 
     .input-actions {
-      display: flex;
+      display: flex !important;
       gap: 2px;
       align-items: center;
       flex-shrink: 0;
       padding-right: 4px;
+      visibility: visible !important;
     }
     .input-actions .btn {
       background: none;
@@ -346,14 +281,11 @@
       transition: all 0.2s;
     }
     .input-actions .btn:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255,255,255,0.05);
       color: #f0f0f5;
     }
-    .input-actions .btn.attach:hover {
-      color: #5B6CFF;
-    }
+    .input-actions .btn.attach:hover { color: #5B6CFF; }
 
-    /* ===== КНОПКА ОТПРАВКИ (Логотип Sklay) ===== */
     .send-btn {
       background: #5B6CFF;
       color: #fff;
@@ -362,83 +294,40 @@
       height: 44px;
       border-radius: 50%;
       cursor: pointer;
-      display: flex;
+      display: flex !important;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
       flex-shrink: 0;
-      box-shadow: 0 2px 12px rgba(91, 108, 255, 0.3);
+      box-shadow: 0 2px 12px rgba(91,108,255,0.3);
       font-size: 22px;
       font-weight: 700;
       font-family: 'Inter', sans-serif;
+      visibility: visible !important;
     }
     .send-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 4px 20px rgba(91, 108, 255, 0.4);
+      box-shadow: 0 4px 20px rgba(91,108,255,0.4);
     }
-    .send-btn:active {
-      transform: scale(0.95);
-    }
+    .send-btn:active { transform: scale(0.95); }
     .send-btn svg {
       width: 24px;
       height: 24px;
       fill: #fff;
     }
 
-    #fileInput {
-      display: none;
-    }
+    #fileInput { display: none; }
 
-    /* ===== АДАПТИВ ===== */
     @media (max-width: 480px) {
-      .message {
-        max-width: 85%;
-        font-size: 15px;
-        padding: 6px 12px;
-      }
-      .chat-input-area {
-        padding: 6px 10px 10px;
-      }
-      .input-wrapper {
-        padding: 2px 2px 2px 12px;
-      }
-      .input-wrapper textarea {
-        font-size: 15px;
-        padding: 6px 4px 6px 0;
-      }
-      .chat-header {
-        padding: 8px 12px;
-        min-height: 48px;
-      }
-      .chat-messages {
-        padding: 8px 12px;
-      }
-      .chat-avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 16px;
-      }
-      .send-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-      }
-      .send-btn svg {
-        width: 20px;
-        height: 20px;
-      }
-    }
-
-    /* ===== СИСТЕМНЫЕ СООБЩЕНИЯ ===== */
-    .system-message {
-      text-align: center;
-      font-size: 12px;
-      color: #666;
-      padding: 6px 0;
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 20px;
-      margin: 4px auto;
-      max-width: 80%;
+      .message { max-width: 85%; font-size: 15px; padding: 6px 12px; }
+      .chat-input-area { padding: 6px 10px 10px; }
+      .input-wrapper { padding: 2px 2px 2px 12px; }
+      .input-wrapper textarea { font-size: 15px; padding: 6px 4px 6px 0; }
+      .chat-header { padding: 8px 12px; min-height: 48px; }
+      .chat-messages { padding: 8px 12px; }
+      .chat-avatar { width: 36px; height: 36px; font-size: 16px; }
+      .send-btn { width: 40px; height: 40px; font-size: 18px; }
+      .send-btn svg { width: 20px; height: 20px; }
     }
   </style>
 </head>
@@ -475,8 +364,8 @@
     </div>
   </div>
 
-  <!-- НИЖНЯЯ ПАНЕЛЬ -->
-  <div class="chat-input-area">
+  <!-- ПАНЕЛЬ ВВОДА (ПРИНУДИТЕЛЬНО ВИДИМА) -->
+  <div class="chat-input-area" id="inputArea">
     <div class="input-wrapper">
       <textarea id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="if(event.key==='Enter' &amp;&amp; !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
       <div class="input-actions">
@@ -495,14 +384,11 @@
 
 </div>
 
-<!-- СКРИПТЫ -->
 <script>
 const chatId = {{ chat.id }};
 const currentUserId = {{ session['user_id'] }};
 let socket = null;
-let mediaUploading = false;
 
-// ===== ЗАГРУЗКА ИНФОРМАЦИИ О ПОЛЬЗОВАТЕЛЕ =====
 function loadUserInfo() {
   fetch('/api/chat_users/' + chatId)
     .then(res => res.json())
@@ -529,7 +415,6 @@ function loadUserInfo() {
     .catch(err => console.error('Ошибка загрузки пользователя:', err));
 }
 
-// ===== WEBSOCKET =====
 function connectSocket() {
   socket = io();
   socket.on('connect', () => {
@@ -541,7 +426,6 @@ function connectSocket() {
   });
 }
 
-// ===== ЗАГРУЗКА СООБЩЕНИЙ =====
 function loadMessages() {
   fetch('/api/messages/' + chatId)
     .then(res => res.json())
@@ -580,7 +464,6 @@ function loadMessages() {
     .catch(err => console.error('Ошибка загрузки сообщений:', err));
 }
 
-// ===== ОТПРАВКА СООБЩЕНИЯ =====
 function sendMessage() {
   const input = document.getElementById('messageInput');
   const content = input.value.trim();
@@ -591,7 +474,6 @@ function sendMessage() {
   input.style.height = 'auto';
 }
 
-// ===== ЗАГРУЗКА ФАЙЛА =====
 function uploadFile(input) {
   const file = input.files[0];
   if (!file) return;
@@ -621,7 +503,6 @@ function uploadFile(input) {
   input.value = '';
 }
 
-// ===== ДОБАВЛЕНИЕ СООБЩЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ =====
 function addMessage(msg) {
   const container = document.getElementById('messagesContainer');
   const empty = container.querySelector('.empty-chat');
@@ -643,60 +524,34 @@ function addMessage(msg) {
   scrollToBottom();
 }
 
-// ===== ПРОКРУТКА ВНИЗ =====
 function scrollToBottom() {
   const container = document.getElementById('chatMessages');
   setTimeout(() => container.scrollTop = container.scrollHeight, 50);
 }
 
-// ===== АВТО-ВЫСОТА TEXTAREA =====
 document.getElementById('messageInput').addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = this.scrollHeight + 'px';
 });
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
 loadUserInfo();
 connectSocket();
 loadMessages();
 
-// Принудительно показываем элементы
-setTimeout(() => {
-  document.querySelectorAll('.chat-input-area, .input-wrapper, .send-btn, #messageInput').forEach(el => {
-    if (el) el.style.display = el.style.display || 'flex';
-  });
+// ПРИНУДИТЕЛЬНО ПОКАЗЫВАЕМ ПАНЕЛЬ ВВОДА
+setTimeout(function() {
+  const area = document.getElementById('inputArea');
+  if (area) {
+    area.style.display = 'flex !important';
+    area.style.visibility = 'visible';
+    area.style.opacity = '1';
+  }
+  const textarea = document.getElementById('messageInput');
+  if (textarea) {
+    textarea.style.display = 'block !important';
+    textarea.style.visibility = 'visible';
+  }
 }, 100);
 </script>
 </body>
 </html>
-<style>
-  /* Принудительно показываем панель ввода */
-  .chat-input-area {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-  .input-wrapper {
-    display: flex !important;
-    visibility: visible !important;
-  }
-  #messageInput {
-    display: block !important;
-    visibility: visible !important;
-  }
-  .send-btn {
-    display: flex !important;
-    visibility: visible !important;
-  }
-  .input-actions {
-    display: flex !important;
-    visibility: visible !important;
-  }
-</style>
-<style>
-  .chat-input-area { display: flex !important; visibility: visible !important; opacity: 1 !important; }
-  .input-wrapper { display: flex !important; visibility: visible !important; }
-  #messageInput { display: block !important; visibility: visible !important; }
-  .send-btn { display: flex !important; visibility: visible !important; }
-  .input-actions { display: flex !important; visibility: visible !important; }
-</style>
