@@ -786,7 +786,6 @@ function loadChats() {
                 <div class="chat-name">${chat.name || "Чат"}</div>
                 <div class="chat-preview">${preview}</div>
               </div>
-              <div class="chat-time">${lastMsg.created_at ? new Date(lastMsg.created_at).toLocaleDateString() : ''}</div>
             `;
             container.appendChild(chatDiv);
           })
@@ -801,7 +800,6 @@ function loadChats() {
                 <div class="chat-name">${chat.name || "Чат"}</div>
                 <div class="chat-preview">${chat.member_count || 0} участников</div>
               </div>
-              <div class="chat-time">${new Date(chat.created_at).toLocaleDateString()}</div>
             `;
             container.appendChild(chatDiv);
           });
