@@ -321,7 +321,6 @@ function loadFriends() {
       return r.json();
     })
     .then(friends => {
-      console.log('✅ Друзья загружены:', friends);
       allFriends = friends || [];
       renderFriendList();
     })
