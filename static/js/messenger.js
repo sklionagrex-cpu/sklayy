@@ -678,7 +678,6 @@ const dockItems = document.querySelectorAll('.dock-item');
 const panels = {
   'panel-feed': document.getElementById('panel-feed'),
   'panel-chats': document.getElementById('panel-chats'),
-  'panel-communities': document.getElementById('panel-communities'),
   'panel-profile': document.getElementById('panel-profile')
 };
 
