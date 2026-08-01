@@ -5,6 +5,8 @@ const app = document.getElementById('app');
 let socket = null;
 let currentUser = {};
 let mediaUrl = null;
+let longPressTimer = null;
+let longPressTarget = null;
 
 function initApp() {
   connectSocket();
@@ -36,6 +38,104 @@ function initApp() {
       results.style.display = 'none';
     }
   });
+
+  // Долгое нажатие для удаления чатов
+  document.addEventListener('touchstart', function(e) {
+    const chatItem = e.target.closest('.chat-item');
+    if (chatItem) {
+      longPressTarget = chatItem;
+      longPressTimer = setTimeout(() => {
+        showChatMenu(chatItem);
+      }, 500);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', function() {
+    clearTimeout(longPressTimer);
+    longPressTarget = null;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function() {
+    clearTimeout(longPressTimer);
+    longPressTarget = null;
+  }, { passive: true });
+}
+
+function showChatMenu(chatItem) {
+  const existingMenu = document.querySelector('.chat-context-menu');
+  if (existingMenu) existingMenu.remove();
+
+  const chatId = chatItem.dataset.chatId || chatItem.getAttribute('onclick')?.match(/\d+/)?.[0];
+  if (!chatId) return;
+
+  const rect = chatItem.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.className = 'chat-context-menu';
+  menu.style.cssText = `
+    position: fixed;
+    top: ${rect.bottom + 10}px;
+    left: ${rect.left}px;
+    background: rgba(20,20,28,0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 8px;
+    min-width: 200px;
+    z-index: 1000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: fadeIn 0.2s ease;
+  `;
+
+  menu.innerHTML = `
+    <div class="menu-item" onclick="deleteChat(${chatId}, false)" style="padding:10px 16px;color:#f0f0f5;border-radius:10px;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-user-slash" style="color:#ff6b6b;"></i>
+      <span>Удалить у себя</span>
+    </div>
+    <div class="menu-item" onclick="deleteChat(${chatId}, true)" style="padding:10px 16px;color:#f0f0f5;border-radius:10px;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-trash-alt" style="color:#ff6b6b;"></i>
+      <span>Удалить у обоих</span>
+    </div>
+    <div class="menu-item" onclick="this.closest('.chat-context-menu').remove()" style="padding:10px 16px;color:#888;border-radius:10px;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-times"></i>
+      <span>Отмена</span>
+    </div>
+  `;
+
+  document.body.appendChild(menu);
+
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 10);
+}
+
+function deleteChat(chatId, deleteForBoth = false) {
+  const url = deleteForBoth 
+    ? `/api/delete_chat_both/${chatId}`
+    : `/api/delete_chat/${chatId}`;
+  
+  const message = deleteForBoth 
+    ? 'Удалить чат для всех участников?' 
+    : 'Удалить чат только у себя?';
+  
+  if (!confirm(message)) return;
+  
+  fetch(url, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        loadChats();
+        loadFriendsChats();
+        document.querySelectorAll('.chat-context-menu').forEach(m => m.remove());
+      } else {
+        alert(data.error || 'Ошибка удаления чата');
+      }
+    })
+    .catch(err => alert('Ошибка: ' + err));
 }
 
 function loadFeed() {
@@ -62,7 +162,7 @@ function loadFeed() {
           if (post.media_url.match(/\.(mp4|webm|ogg)$/i)) {
             mediaHtml = `<video class="feed-video" src="${post.media_url}" controls></video>`;
           } else {
-            mediaHtml = `<img class="feed-image" onclick="openPhotoViewer(this.src)" src="${post.media_url}" alt="Изображение">`;
+            mediaHtml = `<img class="feed-image" src="${post.media_url}" alt="Изображение" onclick="openPhotoViewer(this.src)">`;
           }
         }
         
@@ -121,6 +221,63 @@ function loadFeed() {
       }).join('');
     })
     .catch(err => console.error('Ошибка загрузки ленты:', err));
+}
+
+function openPhotoViewer(imageUrl) {
+  const viewer = document.createElement('div');
+  viewer.className = 'photo-viewer active';
+  viewer.innerHTML = `
+    <button class="close-btn" onclick="this.closest('.photo-viewer').remove()">
+      <i class="fas fa-times"></i>
+    </button>
+    <img src="${imageUrl}" alt="Просмотр фото" id="viewerImage">
+    <div class="zoom-controls">
+      <button onclick="zoomPhoto(-1)"><i class="fas fa-minus"></i></button>
+      <button onclick="zoomPhoto(1)"><i class="fas fa-plus"></i></button>
+      <button onclick="resetZoom()"><i class="fas fa-undo"></i></button>
+    </div>
+  `;
+  
+  document.body.appendChild(viewer);
+  
+  const img = viewer.querySelector('#viewerImage');
+  img.addEventListener('click', function(e) {
+    e.stopPropagation();
+    this.classList.toggle('zoomed');
+  });
+  
+  viewer.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.remove();
+    }
+  });
+  
+  document.addEventListener('keydown', function closeOnEsc(e) {
+    if (e.key === 'Escape') {
+      const v = document.querySelector('.photo-viewer');
+      if (v) {
+        v.remove();
+        document.removeEventListener('keydown', closeOnEsc);
+      }
+    }
+  });
+}
+
+function zoomPhoto(direction) {
+  const img = document.getElementById('viewerImage');
+  if (!img) return;
+  const currentScale = img.style.transform ? parseFloat(img.style.transform.replace('scale(', '').replace(')', '')) : 1;
+  let newScale = currentScale + direction * 0.25;
+  newScale = Math.max(0.5, Math.min(3, newScale));
+  img.style.transform = `scale(${newScale})`;
+  img.classList.remove('zoomed');
+}
+
+function resetZoom() {
+  const img = document.getElementById('viewerImage');
+  if (!img) return;
+  img.style.transform = 'scale(1)';
+  img.classList.remove('zoomed');
 }
 
 function sharePost(postId) {
@@ -640,7 +797,7 @@ function loadChats() {
       if (privateChats.length > 0) {
         html += `<div class="section-label">👤 Личные чаты</div>`;
         html += privateChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
+          <div class="chat-item" onclick="openChat(${chat.id})" data-chat-id="${chat.id}">
             <div class="chat-avatar">👤</div>
             <div class="chat-info">
               <div class="chat-name">${chat.name || 'Личный чат'}</div>
@@ -653,7 +810,7 @@ function loadChats() {
       if (groupChats.length > 0) {
         html += `<div class="section-label">👥 Групповые чаты</div>`;
         html += groupChats.map(chat => `
-          <div class="chat-item" onclick="openChat(${chat.id})">
+          <div class="chat-item" onclick="openChat(${chat.id})" data-chat-id="${chat.id}">
             <div class="chat-avatar">👥</div>
             <div class="chat-info">
               <div class="chat-name">${chat.name || 'Групповой чат'}</div>
@@ -740,65 +897,4 @@ if (splashShown) {
       }, 600);
     }
   }, 1200);
-}
-
-// ===== ПРОСМОТР ФОТО В ПОЛНЫЙ ЭКРАН =====
-function openPhotoViewer(imageUrl) {
-  const viewer = document.createElement('div');
-  viewer.className = 'photo-viewer active';
-  viewer.innerHTML = `
-    <button class="close-btn" onclick="this.closest('.photo-viewer').remove()">
-      <i class="fas fa-times"></i>
-    </button>
-    <img src="${imageUrl}" alt="Просмотр фото" id="viewerImage">
-    <div class="zoom-controls">
-      <button onclick="zoomPhoto(-1)"><i class="fas fa-minus"></i></button>
-      <button onclick="zoomPhoto(1)"><i class="fas fa-plus"></i></button>
-      <button onclick="resetZoom()"><i class="fas fa-undo"></i></button>
-    </div>
-  `;
-  
-  document.body.appendChild(viewer);
-  
-  // Клик по фото для зума
-  const img = viewer.querySelector('#viewerImage');
-  img.addEventListener('click', function(e) {
-    e.stopPropagation();
-    this.classList.toggle('zoomed');
-  });
-  
-  // Закрытие по клику на фон
-  viewer.addEventListener('click', function(e) {
-    if (e.target === this) {
-      this.remove();
-    }
-  });
-  
-  // Закрытие по Escape
-  document.addEventListener('keydown', function closeOnEsc(e) {
-    if (e.key === 'Escape') {
-      const v = document.querySelector('.photo-viewer');
-      if (v) {
-        v.remove();
-        document.removeEventListener('keydown', closeOnEsc);
-      }
-    }
-  });
-}
-
-function zoomPhoto(direction) {
-  const img = document.getElementById('viewerImage');
-  if (!img) return;
-  const currentScale = img.style.transform ? parseFloat(img.style.transform.replace('scale(', '').replace(')', '')) : 1;
-  let newScale = currentScale + direction * 0.25;
-  newScale = Math.max(0.5, Math.min(3, newScale));
-  img.style.transform = `scale(${newScale})`;
-  img.classList.remove('zoomed');
-}
-
-function resetZoom() {
-  const img = document.getElementById('viewerImage');
-  if (!img) return;
-  img.style.transform = 'scale(1)';
-  img.classList.remove('zoomed');
 }
