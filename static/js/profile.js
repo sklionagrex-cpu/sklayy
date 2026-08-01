@@ -41,10 +41,6 @@ function updateUI(user) {
   document.getElementById('edit-phone').value = user.phone || '';
   document.getElementById('edit-bio').value = user.bio || '';
   document.getElementById('edit-status').value = user.status || '';
-  
-  if (window.opener) {
-    window.opener.postMessage({ type: 'profile_updated', user: user }, '*');
-  }
 }
 
 function uploadAvatar(input) {
@@ -185,7 +181,6 @@ function saveProfile() {
   });
 }
 
-// ===== ПОСТЫ =====
 function openPostModal() {
   document.getElementById('postModal').style.display = 'flex';
   document.getElementById('postContent').value = '';
@@ -309,7 +304,6 @@ function shareProfile() {
   }
 }
 
-// ===== ДРУЗЬЯ =====
 function loadFriends() {
   fetch('/api/friends')
     .then(res => res.json())
@@ -402,7 +396,8 @@ function searchUsers(query) {
       }
       resultsContainer.innerHTML = users.map(u => `
         <div class="search-result">
-          <span>${u.full_name || u.username} (@${u.username})</span>
+          <span>${u.full_name || u.username}</span>
+          <span style="color:#888;font-size:12px;">@${u.username}</span>
           <button class="btn-sm" onclick="sendFriendRequest('${u.username}')">➕</button>
         </div>
       `).join('');
@@ -429,7 +424,7 @@ function sendFriendRequest(username) {
   })
   .catch(err => {
     console.error('Ошибка:', err);
-    showToast('❌ Ошибка отправки заявки');
+    showToast('❌ Ошибка отправки');
   });
 }
 
@@ -448,6 +443,12 @@ function openChatWith(username) {
     }
   })
   .catch(err => alert('Ошибка: ' + err));
+}
+
+function addFriend() {
+  const username = prompt('Введите имя пользователя:');
+  if (!username || !username.trim()) return;
+  sendFriendRequest(username.trim());
 }
 
 function acceptFriend(requestId) {
@@ -473,12 +474,6 @@ function rejectFriend(requestId) {
       }
     })
     .catch(err => console.error('Ошибка:', err));
-}
-
-function addFriend() {
-  const username = prompt('Введите имя пользователя:');
-  if (!username || !username.trim()) return;
-  sendFriendRequest(username.trim());
 }
 
 function blockUser(userId) {
