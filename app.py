@@ -207,27 +207,6 @@ def upload_avatar():
     conn.close()
     return jsonify({'url': url})
 
-@app.route('/api/upload_media', methods=['POST'])
-def upload_media():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    if 'media' not in request.files:
-        return jsonify({'error': 'No file'}), 400
-    file = request.files['media']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg']
-    if file.content_type not in allowed_types:
-        return jsonify({'error': 'Unsupported file type'}), 400
-    if file.content_length > 50 * 1024 * 1024:
-        return jsonify({'error': 'File too large (max 50MB)'}), 400
-    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'bin'
-    filename = f"media_{session['user_id']}_{int(datetime.now().timestamp())}.{ext}"
-    filepath = os.path.join(MEDIA_FOLDER, filename)
-    file.save(filepath)
-    url = f"/static/media/{filename}"
-    return jsonify({'url': url})
-
 @app.route('/api/chats')
 def get_chats():
     if 'user_id' not in session:
@@ -235,16 +214,13 @@ def get_chats():
     conn = get_db()
     chats = conn.execute('''
         SELECT c.*, 
-               (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count,
-               (SELECT u.full_name FROM chat_members cm 
-                JOIN users u ON cm.user_id = u.id 
-                WHERE cm.chat_id = c.id AND cm.user_id != ? LIMIT 1) as other_name
+               (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count
         FROM chats c 
         JOIN chat_members cm ON c.id = cm.chat_id 
         WHERE cm.user_id = ? 
         GROUP BY c.id
         ORDER BY c.created_at DESC
-    ''', (session['user_id'], session['user_id'])).fetchall()
+    ''', (session['user_id'],)).fetchall()
     conn.close()
     return jsonify([dict(chat) for chat in chats])
 
@@ -263,6 +239,39 @@ def get_messages(chat_id):
     return jsonify([dict(m) for m in msgs])
 
 @app.route('/api/create_chat', methods=['POST'])
+def create_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    username = request.json.get('username')
+    conn = get_db()
+    target = get_user_by_username(username)
+    if not target:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+    
+    # ПРОВЕРКА НА СУЩЕСТВУЮЩИЙ ЧАТ — УБИРАЕТ ДУБЛИРОВАНИЕ
+    existing = conn.execute('''
+        SELECT c.id FROM chats c
+        JOIN chat_members cm1 ON c.id = cm1.chat_id
+        JOIN chat_members cm2 ON c.id = cm2.chat_id
+        WHERE c.type = 'private' 
+        AND cm1.user_id = ? AND cm2.user_id = ?
+    ''', (session['user_id'], target['id'])).fetchone()
+    
+    if existing:
+        conn.close()
+        return jsonify({'chat_id': existing['id']})
+    
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)',
+                   ('private', session['user_id'], datetime.now().isoformat()))
+    chat_id = cursor.lastrowid
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
+    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'chat_id': chat_id})
+
 @app.route('/api/friends')
 def get_friends():
     if 'user_id' not in session:
@@ -512,6 +521,27 @@ def get_friends_with_chat():
     conn.close()
     return jsonify([dict(f) for f in friends])
 
+@app.route('/api/upload_media', methods=['POST'])
+def upload_media():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    if 'media' not in request.files:
+        return jsonify({'error': 'No file'}), 400
+    file = request.files['media']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg']
+    if file.content_type not in allowed_types:
+        return jsonify({'error': 'Unsupported file type'}), 400
+    if file.content_length > 50 * 1024 * 1024:
+        return jsonify({'error': 'File too large (max 50MB)'}), 400
+    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'bin'
+    filename = f"media_{session['user_id']}_{int(datetime.now().timestamp())}.{ext}"
+    filepath = os.path.join(MEDIA_FOLDER, filename)
+    file.save(filepath)
+    url = f"/static/media/{filename}"
+    return jsonify({'url': url})
+
 @app.route('/api/delete_chat/<int:chat_id>', methods=['DELETE'])
 def delete_chat(chat_id):
     if 'user_id' not in session:
@@ -605,36 +635,3 @@ def handle_join_chat(data):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
-
-@app.route('/api/create_chat', methods=['POST'])
-def create_chat():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    username = request.json.get('username')
-    conn = get_db()
-    target = get_user_by_username(username)
-    if not target:
-        conn.close()
-        return jsonify({'error': 'User not found'}), 404
-    
-    existing = conn.execute('''
-        SELECT c.id FROM chats c
-        JOIN chat_members cm1 ON c.id = cm1.chat_id
-        JOIN chat_members cm2 ON c.id = cm2.chat_id
-        WHERE c.type = 'private' 
-        AND cm1.user_id = ? AND cm2.user_id = ?
-    ''', (session['user_id'], target['id'])).fetchone()
-    
-    if existing:
-        conn.close()
-        return jsonify({'chat_id': existing['id']})
-    
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO chats (type, created_by, created_at) VALUES (?, ?, ?)',
-                   ('private', session['user_id'], datetime.now().isoformat()))
-    chat_id = cursor.lastrowid
-    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, session['user_id']))
-    cursor.execute('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)', (chat_id, target['id']))
-    conn.commit()
-    conn.close()
-    return jsonify({'chat_id': chat_id})
