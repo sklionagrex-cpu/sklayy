@@ -741,3 +741,64 @@ if (splashShown) {
     }
   }, 1200);
 }
+
+// ===== ПРОСМОТР ФОТО В ПОЛНЫЙ ЭКРАН =====
+function openPhotoViewer(imageUrl) {
+  const viewer = document.createElement('div');
+  viewer.className = 'photo-viewer active';
+  viewer.innerHTML = `
+    <button class="close-btn" onclick="this.closest('.photo-viewer').remove()">
+      <i class="fas fa-times"></i>
+    </button>
+    <img src="${imageUrl}" alt="Просмотр фото" id="viewerImage">
+    <div class="zoom-controls">
+      <button onclick="zoomPhoto(-1)"><i class="fas fa-minus"></i></button>
+      <button onclick="zoomPhoto(1)"><i class="fas fa-plus"></i></button>
+      <button onclick="resetZoom()"><i class="fas fa-undo"></i></button>
+    </div>
+  `;
+  
+  document.body.appendChild(viewer);
+  
+  // Клик по фото для зума
+  const img = viewer.querySelector('#viewerImage');
+  img.addEventListener('click', function(e) {
+    e.stopPropagation();
+    this.classList.toggle('zoomed');
+  });
+  
+  // Закрытие по клику на фон
+  viewer.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.remove();
+    }
+  });
+  
+  // Закрытие по Escape
+  document.addEventListener('keydown', function closeOnEsc(e) {
+    if (e.key === 'Escape') {
+      const v = document.querySelector('.photo-viewer');
+      if (v) {
+        v.remove();
+        document.removeEventListener('keydown', closeOnEsc);
+      }
+    }
+  });
+}
+
+function zoomPhoto(direction) {
+  const img = document.getElementById('viewerImage');
+  if (!img) return;
+  const currentScale = img.style.transform ? parseFloat(img.style.transform.replace('scale(', '').replace(')', '')) : 1;
+  let newScale = currentScale + direction * 0.25;
+  newScale = Math.max(0.5, Math.min(3, newScale));
+  img.style.transform = `scale(${newScale})`;
+  img.classList.remove('zoomed');
+}
+
+function resetZoom() {
+  const img = document.getElementById('viewerImage');
+  if (!img) return;
+  img.style.transform = 'scale(1)';
+  img.classList.remove('zoomed');
+}
