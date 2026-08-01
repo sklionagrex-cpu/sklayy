@@ -54,84 +54,45 @@
       border-color: #5B6CFF;
       background: rgba(255,255,255,0.08);
     }
-    .friends-list {
+    .selected-members {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 8px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .friend-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.04);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .friend-item:hover {
-      background: rgba(255,255,255,0.06);
-    }
-    .friend-item.selected {
-      border-color: #5B6CFF;
-      background: rgba(91,108,255,0.1);
-    }
-    .friend-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(91,108,255,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .friend-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .friend-info { flex: 1; }
-    .friend-name {
-      font-weight: 500;
-      font-size: 15px;
-      color: #f0f0f5;
-    }
-    .friend-username {
-      font-size: 13px;
-      color: #888;
-    }
-    .friend-check {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: 2px solid #555;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
-      font-size: 12px;
-      color: #fff;
-    }
-    .friend-item.selected .friend-check {
-      background: #5B6CFF;
-      border-color: #5B6CFF;
-    }
-    .selected-count {
+      flex-wrap: wrap;
+      gap: 8px;
       margin: 12px 0;
-      color: #888;
-      font-size: 14px;
+      min-height: 40px;
     }
-    .selected-count span {
-      color: #5B6CFF;
-      font-weight: 600;
+    .member-chip {
+      background: rgba(91,108,255,0.15);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(91,108,255,0.2);
+    }
+    .member-chip .remove {
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 4px;
+    }
+    .add-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 6px 16px;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .add-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #f0f0f5;
     }
     .btn-create {
       width: 100%;
@@ -156,10 +117,155 @@
       cursor: not-allowed;
       transform: none;
     }
+
+    /* ===== ОКНО ВЫБОРА ДРУЗЕЙ ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-window {
+      background: #1a1a24;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #f0f0f5; }
+    .modal-search {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.04);
+      color: #f0f0f5;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-search:focus { border-color: #5B6CFF; }
+    .modal-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .modal-list .friend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .modal-list .friend-item:hover {
+      background: rgba(255,255,255,0.04);
+    }
+    .modal-list .friend-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(91,108,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .modal-list .friend-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .modal-list .friend-info { flex: 1; }
+    .modal-list .friend-name {
+      font-weight: 500;
+      font-size: 15px;
+    }
+    .modal-list .friend-username {
+      font-size: 12px;
+      color: #888;
+    }
+    .modal-list .friend-add {
+      background: #5B6CFF;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .modal-list .friend-add:hover {
+      transform: scale(1.1);
+    }
+    .modal-list .friend-add.added {
+      background: #ff6b6b;
+    }
     .empty-state {
       text-align: center;
       color: #666;
-      padding: 40px 20px;
+      padding: 30px 20px;
+    }
+    .modal-footer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: flex-end;
+    }
+    .modal-footer .done-btn {
+      padding: 8px 24px;
+      border: none;
+      border-radius: 10px;
+      background: #5B6CFF;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-footer .done-btn:hover {
+      opacity: 0.9;
     }
   </style>
 </head>
@@ -168,104 +274,175 @@
 <a href="/app" class="back-btn"><i class="fas fa-arrow-left"></i> Назад</a>
 <h1 class="page-title">👥 Создать группу</h1>
 
+<!-- Шаг 1: Название группы -->
 <div class="form-group">
   <label>Название группы</label>
   <input type="text" id="groupNameInput" placeholder="Введите название...">
 </div>
 
+<!-- Шаг 2: Выбранные участники -->
 <div class="form-group">
-  <label>Выберите участников (минимум 2)</label>
-  <div class="selected-count">Выбрано: <span id="selectedCount">0</span></div>
-  <div class="friends-list" id="groupFriendsList">
-    <div class="empty-state">⏳ Загрузка друзей...</div>
+  <label>Участники</label>
+  <div class="selected-members" id="selectedMembers">
+    <button class="add-btn" onclick="openAddMembers()">
+      <i class="fas fa-plus"></i> Добавить участников
+    </button>
   </div>
 </div>
 
+<!-- Шаг 3: Кнопка создания -->
 <button class="btn-create" id="createGroupBtn" disabled>Создать группу</button>
 
-<script>
-let selectedFriends = [];
+<!-- ===== МОДАЛКА ВЫБОРА ДРУЗЕЙ ===== -->
+<div class="modal-overlay" id="membersModal">
+  <div class="modal-window">
+    <div class="modal-header">
+      <h3>Выбрать участников</h3>
+      <button class="modal-close" onclick="closeAddMembers()">✕</button>
+    </div>
+    <input class="modal-search" id="memberSearch" placeholder="Поиск..." oninput="filterFriends(this.value)">
+    <div class="modal-list" id="modalFriendsList">
+      <div class="empty-state">⏳ Загрузка...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="done-btn" onclick="closeAddMembers()">Готово</button>
+    </div>
+  </div>
+</div>
 
+<script>
+// ===== СОСТОЯНИЕ =====
+let selectedMembers = []; // { id, username, fullName, avatar }
+let allFriends = [];
+
+// ===== ЗАГРУЗКА ДРУЗЕЙ =====
 function loadFriends() {
-  const container = document.getElementById('groupFriendsList');
-  if (!container) {
-    console.error('❌ Контейнер groupFriendsList не найден');
-    return;
-  }
-  
+  const container = document.getElementById('modalFriendsList');
   container.innerHTML = '<div class="empty-state">⏳ Загрузка...</div>';
   
   fetch('/api/friends')
-    .then(r => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
+    .then(r => r.json())
     .then(friends => {
-      console.log('✅ Друзья получены:', friends);
-      if (!friends || friends.length === 0) {
-        container.innerHTML = '<div class="empty-state">У вас нет друзей</div>';
-        return;
-      }
-      container.innerHTML = friends.map(f => {
-        const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
-          ? `<img src="${f.avatar}" alt="Avatar">`
-          : (f.avatar || '👤');
-        return `
-          <div class="friend-item" data-id="${f.id}" onclick="toggleFriend(${f.id})">
-            <div class="friend-avatar">${avatarHtml}</div>
-            <div class="friend-info">
-              <div class="friend-name">${f.full_name || f.username}</div>
-              <div class="friend-username">@${f.username}</div>
-            </div>
-            <div class="friend-check"><i class="fas fa-check"></i></div>
-          </div>
-        `;
-      }).join('');
+      allFriends = friends;
+      renderFriendList();
     })
     .catch(err => {
-      console.error('❌ Ошибка загрузки друзей:', err);
-      container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки друзей</div>';
+      console.error('Ошибка загрузки друзей:', err);
+      container.innerHTML = '<div class="empty-state">❌ Ошибка загрузки</div>';
     });
 }
 
-function toggleFriend(id) {
-  const item = document.querySelector(`.friend-item[data-id="${id}"]`);
-  if (!item) return;
+function renderFriendList(filter = '') {
+  const container = document.getElementById('modalFriendsList');
+  const filtered = allFriends.filter(f => 
+    (f.full_name || f.username).toLowerCase().includes(filter.toLowerCase()) ||
+    f.username.toLowerCase().includes(filter.toLowerCase())
+  );
   
-  const index = selectedFriends.indexOf(id);
-  if (index > -1) {
-    selectedFriends.splice(index, 1);
-    item.classList.remove('selected');
-  } else {
-    selectedFriends.push(id);
-    item.classList.add('selected');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">Нет друзей</div>';
+    return;
   }
   
-  updateUI();
+  container.innerHTML = filtered.map(f => {
+    const isAdded = selectedMembers.some(m => m.id === f.id);
+    const avatarHtml = f.avatar && f.avatar.startsWith('/static/uploads/')
+      ? `<img src="${f.avatar}" alt="Avatar">`
+      : (f.avatar || '👤');
+    return `
+      <div class="friend-item">
+        <div class="friend-avatar">${avatarHtml}</div>
+        <div class="friend-info">
+          <div class="friend-name">${f.full_name || f.username}</div>
+          <div class="friend-username">@${f.username}</div>
+        </div>
+        <button class="friend-add ${isAdded ? 'added' : ''}" onclick="toggleMember(${f.id}, '${f.username}', '${f.full_name || f.username}', '${f.avatar || ''}')">
+          <i class="fas ${isAdded ? 'fa-times' : 'fa-plus'}"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 
-function updateUI() {
-  const count = selectedFriends.length;
-  document.getElementById('selectedCount').textContent = count;
+function filterFriends(value) {
+  renderFriendList(value);
+}
+
+// ===== ДОБАВЛЕНИЕ/УДАЛЕНИЕ УЧАСТНИКА =====
+function toggleMember(id, username, fullName, avatar) {
+  const index = selectedMembers.findIndex(m => m.id === id);
+  if (index > -1) {
+    selectedMembers.splice(index, 1);
+  } else {
+    selectedMembers.push({ id, username, fullName, avatar });
+  }
+  renderFriendList(document.getElementById('memberSearch').value);
+  updateSelectedMembersUI();
+  updateCreateButton();
+}
+
+function updateSelectedMembersUI() {
+  const container = document.getElementById('selectedMembers');
+  if (selectedMembers.length === 0) {
+    container.innerHTML = `<button class="add-btn" onclick="openAddMembers()">
+      <i class="fas fa-plus"></i> Добавить участников
+    </button>`;
+    return;
+  }
+  
+  let html = '';
+  selectedMembers.forEach(m => {
+    html += `
+      <span class="member-chip">
+        ${m.fullName || m.username}
+        <button class="remove" onclick="removeMember(${m.id})">✕</button>
+      </span>
+    `;
+  });
+  html += `<button class="add-btn" onclick="openAddMembers()">
+    <i class="fas fa-plus"></i>
+  </button>`;
+  container.innerHTML = html;
+}
+
+function removeMember(id) {
+  selectedMembers = selectedMembers.filter(m => m.id !== id);
+  updateSelectedMembersUI();
+  updateCreateButton();
+  // Обновляем модалку, если она открыта
+  if (document.getElementById('membersModal').classList.contains('active')) {
+    renderFriendList(document.getElementById('memberSearch').value);
+  }
+}
+
+function updateCreateButton() {
   const btn = document.getElementById('createGroupBtn');
-  btn.disabled = count < 2;
+  const name = document.getElementById('groupNameInput').value.trim();
+  btn.disabled = !(name && selectedMembers.length >= 2);
 }
 
+// ===== ОТКРЫТИЕ/ЗАКРЫТИЕ МОДАЛКИ =====
+function openAddMembers() {
+  document.getElementById('membersModal').classList.add('active');
+  document.getElementById('memberSearch').value = '';
+  renderFriendList();
+}
+
+function closeAddMembers() {
+  document.getElementById('membersModal').classList.remove('active');
+}
+
+// ===== СОЗДАНИЕ ГРУППЫ =====
 document.getElementById('createGroupBtn').addEventListener('click', function() {
   const name = document.getElementById('groupNameInput').value.trim();
   if (!name) { alert('Введите название группы'); return; }
-  if (selectedFriends.length < 2) { alert('Выберите минимум 2 участника'); return; }
+  if (selectedMembers.length < 2) { alert('Выберите минимум 2 участника'); return; }
   
-  const selectedNames = [];
-  document.querySelectorAll('.friend-item.selected').forEach(el => {
-    const username = el.querySelector('.friend-username').textContent.replace('@', '');
-    selectedNames.push(username);
-  });
-  
+  const members = selectedMembers.map(m => m.username);
   fetch('/api/create_group', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name, members: selectedNames })
+    body: JSON.stringify({ name: name, members: members })
   })
   .then(r => r.json())
   .then(data => {
@@ -278,8 +455,15 @@ document.getElementById('createGroupBtn').addEventListener('click', function() {
   .catch(err => alert('Ошибка: ' + err));
 });
 
-// Загружаем друзей при открытии страницы
-document.addEventListener('DOMContentLoaded', loadFriends);
+// ===== ОТСЛЕЖИВАЕМ ИЗМЕНЕНИЕ НАЗВАНИЯ =====
+document.getElementById('groupNameInput').addEventListener('input', updateCreateButton);
+
+// ===== ЗАГРУЖАЕМ ДРУЗЕЙ ПРИ СТАРТЕ =====
+document.addEventListener('DOMContentLoaded', function() {
+  loadFriends();
+  updateSelectedMembersUI();
+  updateCreateButton();
+});
 </script>
 </body>
 </html>
